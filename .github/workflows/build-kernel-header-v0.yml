@@ -123,7 +123,7 @@ jobs:
 
       - name: "Clone tinanium-module source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) -b k4.19 https://github.com/SnowAlice-Miscellaneous/techpack_xiaomi-titanium $KERNELNAME/techpack/xiaomi-titanium
+          git clone --recursive --depth=1 -j $(nproc) -b rework/k4.9 https://github.com/SnowAlice-Miscellaneous/techpack_xiaomi-titanium $KERNELNAME/techpack/xiaomi-titanium
           
       - name: "Clone Clang"
         env:
