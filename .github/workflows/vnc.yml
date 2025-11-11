@@ -1,0 +1,58 @@
+name: noVNC RDP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-rdp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install desktop + VNC + noVNC
+        run: |
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies tightvncserver novnc websockify curl unzip
+
+          # Set VNC password (tanpa prompt)
+          mkdir -p ~/.vnc
+          echo "123456" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+
+          # Konfigurasi xstartup
+          cat > ~/.vnc/xstartup <<EOF
+          #!/bin/sh
+          unset SESSION_MANAGER
+          unset DBUS_SESSION_BUS_ADDRESS
+          startxfce4 &
+          EOF
+          chmod +x ~/.vnc/xstartup
+
+          # Jalankan VNC
+          vncserver :1 -geometry 1280x720 -depth 16 -localhost
+
+          # Jalankan noVNC
+          websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
+          echo "noVNC is running on port 6080"
+
+      - name: Install Cloudflared tunnel
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: Expose noVNC public URL
+        run: |
+          echo "Creating public tunnel..."
+          cloudflared tunnel --url http://localhost:6080 --no-autoupdate > log.txt 2>&1 &
+          sleep 10
+          echo "=============================================="
+          echo "Your noVNC RDP is ready!"
+          echo "Password: 123456"
+          echo "----------------------------------------------"
+          grep -o 'https://.*trycloudflare.com' log.txt
+          echo "=============================================="
+          echo "Keep this Actions job running to maintain connection."
+          tail -f /dev/null
