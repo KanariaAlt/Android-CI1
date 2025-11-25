@@ -53,17 +53,17 @@ jobs:
       run: |
         git clone https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git ~/xcb-errors
         cd ~/xcb-errors
-        meson setup build --prefix=/usr
-        ninja -C build
-        sudo ninja -C build install
+        ./autogen.sh --prefix=/usr
+        make -j$(nproc)
+        sudo make install
 
     - name: Build epoll-shim
       run: |
         git clone https://gitlab.freedesktop.org/xorg/lib/epoll-shim.git ~/epoll-shim
         cd ~/epoll-shim
-        meson setup build --prefix=/usr
-        ninja -C build
-        sudo ninja -C build install
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake --build build -j$(nproc)
+        sudo cmake --install build
 
     - name: Build wlroots (patched calloc)
       run: |
