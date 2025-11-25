@@ -42,14 +42,9 @@ jobs:
         ninja -C build
         sudo ninja -C build install
 
-    - name: Download hyprlang v0.52.1
+    - name: Download hyprlang
       run: |
-        wget https://github.com/hyprwm/hyprlang/archive/refs/tags/v0.52.1.tar.gz -O hyprlang.tar.gz
-        tar -xvf hyprlang.tar.gz
-        mv hyprlang-0.52.1 hyprlang
-
-    - name: Build hyprlang
-      run: |
+        git clone https://github.com/hyprwm/hyprlang.git
         cd hyprlang
         cmake -B build
         cmake --build build --config Release
