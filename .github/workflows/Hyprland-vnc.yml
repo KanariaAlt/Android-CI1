@@ -166,7 +166,8 @@ jobs:
         cat > subprojects/glaze/meson.build <<'EOF'
         project('glaze', 'cpp', default_options : ['cpp_std=c++17'])
         glaze_dep = declare_dependency(
-          include_directories: include_directories('.')
+          include_directories: include_directories('.'),
+          install : true
         )
         glaze_dep
         EOF
