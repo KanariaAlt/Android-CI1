@@ -76,6 +76,14 @@ jobs:
         cmake --build ./build --config Release --target hyprlang -j`nproc 2>/dev/null || getconf _NPROCESSORS_CONF`
         sudo cmake --install build
 
+    - name: Build hyprwayland-scanner
+      run: |
+        git clone https://github.com/hyprwm/hyprwayland-scanner.git ~/hyprwayland-scanner
+        cd ~/hyprwayland-scanner
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake --build build -j$(nproc)
+        sudo cmake --install build
+
     - name: Build Aquamarine
       run: |
         git clone https://github.com/hyprwm/aquamarine.git ~/aquamarine
