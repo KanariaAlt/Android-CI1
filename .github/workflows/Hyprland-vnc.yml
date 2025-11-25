@@ -161,15 +161,15 @@ jobs:
         echo "[wrap-git]" > subprojects/wayland-protocols.wrap
         echo "url = https://gitlab.freedesktop.org/wayland/wayland-protocols.git" >> subprojects/wayland-protocols.wrap
         echo "revision = main" >> subprojects/wayland-protocols.wrap
-        # glaze header-only
         # glaze subproject
         git clone https://github.com/stephenberry/glaze.git subprojects/glaze
         cat > subprojects/glaze/meson.build <<EOF
         project('glaze', 'cpp', default_options : ['cpp_std=c++17'])
-        glaze_inc = include_directories('include')
         glaze_dep = declare_dependency(
-          include_directories: glaze_inc
+          include_directories : include_directories('.'),
+          link_with : []
         )
+        glaze_dep
         EOF
         export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH
         meson setup build --prefix=/usr
