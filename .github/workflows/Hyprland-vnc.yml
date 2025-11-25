@@ -69,7 +69,7 @@ jobs:
         cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
         sudo cmake --install build
 
-    - name: Download hyprlang
+    - name: Build hyprlang
       run: |
         git clone https://github.com/hyprwm/hyprlang.git
         cd hyprlang
@@ -125,6 +125,14 @@ jobs:
         cd ~/hyprcursor
         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr 
         cmake --build build --target all -j$(nproc)
+        sudo cmake --install build
+
+    - name: Build hyprgraphics
+      run: |
+        git clone https://github.com/hyprwm/hyprgraphics.git ~/hyprgraphics
+        cd ~/hyprgraphics
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake --build build -j$(nproc)
         sudo cmake --install build
 
     - name: Build Hyprland from source
