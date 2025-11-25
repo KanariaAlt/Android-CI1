@@ -80,7 +80,8 @@ jobs:
       run: |
         wget https://github.com/hyprwm/Hyprland/releases/download/v0.52.1/source-v0.52.1.tar.gz
         tar xf source-v0.52.1.tar.gz
-        cd source-v0.52.1
+        SRC_DIR=$(tar tf source-v0.52.1.tar.gz | head -1 | cut -f1 -d"/")
+        cd "$SRC_DIR"
         meson setup build --prefix=/usr
         ninja -C build
         sudo ninja -C build install
