@@ -1,0 +1,97 @@
+name: Hyprland VNC Workspace
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hyprland-vnc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install base dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            git cmake meson ninja-build build-essential pkg-config \
+            libwayland-dev wayland-protocols libxkbcommon-dev libudev-dev \
+            libinput-dev libpixman-1-dev libseat-dev \
+            libdrm-dev libgbm-dev libegl1-mesa-dev libgles2-mesa-dev \
+            libsdl2-dev libxcb1-dev libxcb-composite0-dev \
+            xwayland python3-pip curl wget unzip xauth \
+            mesa-utils mesa-utils-extra libgl1-mesa-dri \
+            dbus-x11
+
+      - name: Install wayvnc
+        run: |
+          sudo apt install -y wayvnc tigervnc-standalone-server
+
+      - name: Add Hyprland PPA
+        run: |
+          sudo add-apt-repository ppa:hyprwm/ppa -y
+          sudo apt update
+          sudo apt install -y hyprland
+
+      - name: Install Hyprdots dependencies
+        run: |
+          sudo apt install -y \
+            kitty swww wlogout waybar rofi-wayland mako-notifier \
+            python3-pip zsh fish fonts-font-awesome starship
+          pip3 install --user pywal
+
+      - name: Clone end-4/dots-hyprland
+        run: |
+          git clone https://github.com/end-4/dots-hyprland ~/hyprdots
+          cd ~/hyprdots
+          chmod +x setup
+
+      - name: Install Hyprdots
+        run: |
+          cd ~/hyprdots
+          ./setup install || true
+
+      - name: Create Hyprland headless session
+        run: |
+          mkdir -p ~/.config/hypr
+
+          cat > ~/.config/hypr/headless.conf <<EOF
+          monitor=,preferred,auto,1
+          exec-once=swww init
+          exec-once=waybar
+          EOF
+
+      - name: Launch Hyprland
+        run: |
+          export WLR_RENDERER_ALLOW_SOFTWARE=1
+          export WLR_BACKENDS=headless
+          export HYPRLAND_LOG_WL=1
+
+          Hyprland --config ~/.config/hypr/headless.conf &
+          sleep 5
+
+      - name: Start VNC Server
+        run: |
+          mkdir -p ~/.vnc
+          echo "" > ~/.vncpass
+          wayvnc --address 0.0.0.0 --password-file ~/.vncpass &
+
+      - name: Install cloudflared
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: Expose VNC via Cloudflare Tunnel
+        run: |
+          echo "Starting tunnel..."
+          cloudflared tunnel --url vnc://localhost:5900 --no-autoupdate > log.txt 2>&1 &
+          sleep 8
+          echo "======================================="
+          echo "URL:"
+          grep -o 'https://.*trycloudflare.com' log.txt
+          echo "======================================="
+
+      - name: Keep alive
+        run: tail -f /dev/null
