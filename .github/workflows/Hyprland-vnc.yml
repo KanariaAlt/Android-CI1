@@ -42,21 +42,18 @@ jobs:
         ninja -C build
         sudo ninja -C build install
 
-    - name: Build hyprlang (safe meson root/src detection)
+    - name: Download hyprlang v0.52.1
       run: |
-        git clone --depth 1 https://github.com/hyprwm/hyprlang.git ~/hyprlang
-        cd ~/hyprlang
-        if [ -f meson.build ]; then
-          meson setup build --prefix=/usr
-        elif [ -f src/meson.build ]; then
-          meson setup build src --prefix=/usr
-        else
-          echo "ERROR: no meson.build found in hyprlang; listing files:"
-          ls -la
-          exit 1
-        fi
-        meson compile -C build
-        sudo meson install -C build
+        wget https://github.com/hyprwm/hyprlang/archive/refs/tags/v0.52.1.tar.gz -O hyprlang.tar.gz
+        tar -xvf hyprlang.tar.gz
+        mv hyprlang-0.52.1 hyprlang
+
+    - name: Build hyprlang
+      run: |
+        cd hyprlang
+        cmake -B build
+        cmake --build build --config Release
+        sudo cmake --install build
 
     - name: Build Hyprland from source
       run: |
