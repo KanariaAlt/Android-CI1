@@ -74,7 +74,7 @@ jobs:
           mkdir -p subprojects
           echo "[wrap-git]" > subprojects/wayland-protocols.wrap
           echo "url = https://gitlab.freedesktop.org/wayland/wayland-protocols.git" >> subprojects/wayland-protocols.wrap
-          echo "revision = 1.49" >> subprojects/wayland-protocols.wrap
+          echo "revision = main" >> subprojects/wayland-protocols.wrap
 
     - name: Build wlroots (patched calloc)
       run: |
