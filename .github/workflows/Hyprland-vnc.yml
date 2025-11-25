@@ -106,13 +106,24 @@ jobs:
       run: |
         git clone https://github.com/marzer/tomlplusplus.git ~/tomlplusplus
         sudo cp -r ~/tomlplusplus/include/toml++ /usr/include/
+        # buat pkg-config file supaya CMake bisa menemukan tomlplusplus
+        echo "prefix=/usr
+        exec_prefix=\${prefix}
+        includedir=\${prefix}/include
+        libdir=\${exec_prefix}/lib
+
+        Name: tomlplusplus
+        Description: Header-only toml++ library
+        Version: 3.3.0
+        Cflags: -I\${includedir}/toml++
+        Libs:
+          " | sudo tee /usr/lib/x86_64-linux-gnu/pkgconfig/tomlplusplus.pc
 
     - name: Build hyprcursor
       run: |
         git clone https://github.com/hyprwm/hyprcursor.git ~/hyprcursor
         cd ~/hyprcursor
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-          -DCMAKE_PREFIX_PATH=/usr/include/toml++
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr 
         cmake --build build --target all -j$(nproc)
         sudo cmake --install build
 
