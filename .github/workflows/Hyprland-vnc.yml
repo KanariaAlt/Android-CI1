@@ -51,7 +51,7 @@ jobs:
 
     - name: Build xcb-errors
       run: |
-        git clone https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git ~/xcb-errors
+        git clone --recurse-submodules https://gitlab.freedesktop.org/xorg/lib/libxcb-errors.git ~/xcb-errors
         cd ~/xcb-errors
         ./autogen.sh --prefix=/usr
         make -j$(nproc)
