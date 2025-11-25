@@ -40,7 +40,7 @@ jobs:
           libwayland-dev wayland-protocols \
           liburing-dev libinih-dev libpugixml-dev libmtdev-dev libwacom-dev \
           libgtk-3-dev libglib2.0-dev libzip-dev librsvg2-dev libmagic-dev libjpeg-dev libwebp-dev libpng-dev libcairo2-dev \
-          libpangocairo-1.0-0 libpixman-1-dev librsvg2-dev libre2-dev libxcb-errors-dev libxcb-res0-dev libepoll-shim-dev libinotifytools0-dev
+          libpangocairo-1.0-0 libpixman-1-dev librsvg2-dev libre2-dev libxcb-res0-dev libinotifytools0-dev
        
         sudo apt install -y \
           libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
@@ -48,6 +48,22 @@ jobs:
         
         sudo apt install -y \
           libvirglrenderer-dev libsdl2-dev xwayland
+
+    - name: Build xcb-errors
+      run: |
+        git clone https://github.com/Airblader/xcb-errors.git ~/xcb-errors
+        cd ~/xcb-errors
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
+
+    - name: Build epoll-shim
+      run: |
+        git clone https://github.com/Airblader/epoll-shim.git ~/epoll-shim
+        cd ~/epoll-shim
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
 
     - name: Build wlroots (patched calloc)
       run: |
