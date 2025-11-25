@@ -10,7 +10,7 @@ jobs:
 
     env:
       DEBIAN_FRONTEND: noninteractive
-      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
 
     steps:
     - name: Checkout
@@ -120,7 +120,6 @@ jobs:
       run: |
         git clone https://github.com/marzer/tomlplusplus.git ~/tomlplusplus
         sudo cp -r ~/tomlplusplus/include/toml++ /usr/include/
-        # buat pkg-config file supaya CMake bisa menemukan tomlplusplus
         echo "prefix=/usr
         exec_prefix=\${prefix}
         includedir=\${prefix}/include
@@ -149,22 +148,6 @@ jobs:
         cmake --build build -j$(nproc)
         sudo cmake --install build
 
-    - name: Build glaze (header-only)
-      run: |
-        git clone https://github.com/stephenberry/glaze.git ~/glaze
-        sudo cp -r ~/glaze/include/glaze /usr/include/
-        # Buat pkg-config file supaya Meson bisa menemukan glaze
-        echo "prefix=/usr
-        exec_prefix=\${prefix}
-        includedir=\${prefix}/include
-        libdir=\${exec_prefix}/lib
-        Name: glaze
-        Description: Header-only glaze library
-        Version: 1.0
-        Cflags: -I\${includedir}/glaze
-        Libs:
-          " | sudo tee /usr/lib/x86_64-linux-gnu/pkgconfig/glaze.pc
-
     - name: Build Hyprland from source
       run: |
         git clone -b v0.52.1-b https://github.com/hyprwm/Hyprland.git ~/hyprland-source
@@ -178,6 +161,19 @@ jobs:
         echo "[wrap-git]" > subprojects/wayland-protocols.wrap
         echo "url = https://gitlab.freedesktop.org/wayland/wayland-protocols.git" >> subprojects/wayland-protocols.wrap
         echo "revision = main" >> subprojects/wayland-protocols.wrap
+         # glaze header-only
+        git clone https://github.com/stephengold/glaze.git ~/glaze
+        sudo cp -r ~/glaze/include/glaze /usr/include/
+        echo "prefix=/usr
+        exec_prefix=\${prefix}
+        includedir=\${prefix}/include
+
+        Name: glaze
+        Description: Header-only glaze library
+        Version: 6.1.0
+        Cflags: -I\${includedir}/glaze
+        Libs:
+          " | sudo tee /usr/lib/x86_64-linux-gnu/pkgconfig/glaze.pc
         meson setup build --prefix=/usr
         ninja -C build
         sudo ninja -C build install
