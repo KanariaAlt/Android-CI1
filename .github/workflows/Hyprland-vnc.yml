@@ -4,105 +4,130 @@ on:
   workflow_dispatch:
 
 jobs:
-  hyprland:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Install base system & mesa
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            git curl wget unzip cmake meson ninja-build build-essential pkg-config \
-            libwayland-dev wayland-protocols libxkbcommon-dev libinput-dev \
-            libpixman-1-dev libseat-dev libudev-dev libdrm-dev libgbm-dev \
-            libegl1-mesa-dev libgles2-mesa-dev mesa-utils mesa-va-drivers \
-            libosmesa6 libsdl2-dev libxcb1-dev libxcb-composite0-dev \
-            xwayland xauth dbus-x11
+    - name: Install base dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y \
+          build-essential cmake meson ninja-build pkg-config \
+          git curl wget unzip gettext dbus-x11 \
+          libdisplay-info-dev libdrm-dev libgbm-dev libinput-dev \
+          libpixman-1-dev libseat-dev libsystemd-dev \
+          libudev-dev libxkbcommon-dev libxcb1-dev libxcb-render0-dev \
+          libxcb-composite0-dev libxcb-present-dev libxcb-xfixes0-dev \
+          libxcb-shm0-dev libvulkan-dev \
+          libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
+          libwayland-dev wayland-protocols \
+          elogind liburing-dev libinih-dev
+       
+        sudo apt install -y \
+          libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
+          libpango1.0-dev libcairo2-dev
+        
+        sudo apt install -y \
+          libvirglrenderer-dev libsdl2-dev xwayland
 
-      - name: Install virtual GPU (virglrenderer)
-        run: |
-          sudo apt install -y libvirglrenderer-dev
+    - name: Build wlroots
+      run: |
+        git clone https://gitlab.freedesktop.org/wlroots/wlroots.git --branch 0.17.0 ~/wlroots
+        cd ~/wlroots
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
 
-      - name: Install Hyprland (latest release)
-        run: |
-          HYPR=$(curl -s https://api.github.com/repos/hyprwm/Hyprland/releases/latest | grep tag_name | cut -d '"' -f4)
-          wget https://github.com/hyprwm/Hyprland/releases/download/$HYPR/hyprland_${HYPR#v}_amd64.deb
-          sudo apt install -y ./hyprland_${HYPR#v}_amd64.deb || true
+    - name: Build hyprlang
+      run: |
+        git clone https://github.com/hyprwm/hyprlang.git ~/hyprlang
+        cd ~/hyprlang
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
 
-      - name: Install Hyprdots dependencies
-        run: |
-          sudo apt install -y \
-            kitty rofi-wayland swww waybar mako-notifier \
-            fonts-font-awesome zsh fish
+    - name: Build Hyprland from source
+      run: |
+        wget https://github.com/hyprwm/Hyprland/releases/download/v0.52.1/source-v0.52.1.tar.gz
+        tar xf source-v0.52.1.tar.gz
+        cd source-v0.52.1
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
 
-          pip3 install --user pywal
+    - name: Install Hyprdots dependencies
+      run: |
+        sudo apt install -y \
+          kitty rofi-wayland waybar mako-notifier \
+          swww fonts-font-awesome zsh fish
+        pip3 install --user pywal
 
-      - name: Clone Hyprdots
-        run: |
-          git clone https://github.com/end-4/dots-hyprland ~/hyprdots
-          cd ~/hyprdots
-          chmod +x setup
+    - name: Clone Hyprdots
+      run: |
+        git clone https://github.com/end-4/dots-hyprland ~/hyprdots
+        chmod +x ~/hyprdots/setup
 
-      - name: Install Hyprdots
-        run: |
-          cd ~/hyprdots
-          ./setup install || true
+    - name: Install Hyprdots
+      run: |
+        cd ~/hyprdots
+        ./setup install || true
 
-      - name: Create headless Hyprland config
-        run: |
-          mkdir -p ~/.config/hypr
-          cat > ~/.config/hypr/headless.conf <<EOF
-          monitor=,preferred,auto,1
-          exec-once=swww init
-          exec-once=waybar
-          exec-once=mako
-          exec-once=kitty
-          EOF
+    - name: Create Headless Hyprland Config
+      run: |
+        mkdir -p ~/.config/hypr
+        cat > ~/.config/hypr/headless.conf <<EOF
+        monitor=,preferred,auto,1
+        exec-once=swww init
+        exec-once=waybar
+        exec-once=mako
+        exec-once=kitty
+        EOF
 
-      - name: Start Hyprland (headless + virglrenderer)
-        run: |
-          export WLR_BACKENDS=headless
-          export WLR_RENDERER=vulkan
-          export WLR_RENDERER_ALLOW_SOFTWARE=1
-          export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
-          export GALLIUM_DRIVER=llvmpipe
+    - name: Start Hyprland (headless)
+      run: |
+        export WLR_BACKENDS=headless
+        export WLR_RENDERER=vulkan
+        export WLR_RENDERER_ALLOW_SOFTWARE=1
+        export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+        export GALLIUM_DRIVER=llvmpipe
 
-          Hyprland --config ~/.config/hypr/headless.conf &
-          sleep 8
+        Hyprland --config ~/.config/hypr/headless.conf &
+        sleep 10
 
-      - name: Install wayvnc (Wayland-native VNC)
-        run: |
-          sudo apt install -y wayvnc
+    - name: Install WayVNC
+      run: sudo apt install -y wayvnc
 
-      - name: Start VNC (port 5900)
-        run: |
-          echo "" > ~/.vncpass
-          wayvnc --address 0.0.0.0 --password-file ~/.vncpass &
-          sleep 4
+    - name: Start WayVNC
+      run: |
+        echo "" > ~/.vncpass
+        wayvnc --address 0.0.0.0 --password-file ~/.vncpass &
+        sleep 5
 
-      - name: Start noVNC
-        run: |
-          sudo apt install -y novnc websockify
-          websockify --web /usr/share/novnc/ 6080 localhost:5900 &
-          sleep 3
+    - name: Install noVNC
+      run: sudo apt install -y novnc websockify
 
-      - name: Install cloudflared
-        run: |
-          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
+    - name: Start noVNC
+      run: |
+        websockify --web /usr/share/novnc/ 6080 localhost:5900 &
+        sleep 4
 
-      - name: Expose public URL (Cloudflare)
-        run: |
-          cloudflared tunnel --url http://localhost:6080 --no-autoupdate > log.txt 2>&1 &
-          sleep 8
-          echo "========================================"
-          echo "URL:"
-          grep -o 'https://.*trycloudflare.com' log.txt
-          echo "========================================"
+    - name: Install Cloudflared
+      run: |
+        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: Keep alive
-        run: tail -f /dev/null
+    - name: Start Tunnel
+      run: |
+        cloudflared tunnel --url http://localhost:6080 --no-autoupdate > log.txt 2>&1 &
+        sleep 10
+        echo "=============================================="
+        echo "Public URL:"
+        grep -o 'https://.*trycloudflare.com' log.txt
+        echo "=============================================="
+
+    - name: Keep alive
+      run: tail -f /dev/null
