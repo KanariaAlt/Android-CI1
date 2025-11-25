@@ -25,7 +25,7 @@ jobs:
           libxcb-shm0-dev libvulkan-dev \
           libegl1-mesa-dev libgles2-mesa-dev libgl1-mesa-dev \
           libwayland-dev wayland-protocols \
-          elogind liburing-dev libinih-dev
+          liburing-dev libinih-dev
        
         sudo apt install -y \
           libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
