@@ -105,16 +105,14 @@ jobs:
     - name: Build tomlplusplus
       run: |
         git clone https://github.com/marzer/tomlplusplus.git ~/tomlplusplus
-        cd ~/tomlplusplus
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
-        cmake --build build -j$(nproc)
-        sudo cmake --install build
+        sudo cp -r ~/tomlplusplus/include/toml++ /usr/include/
 
     - name: Build hyprcursor
       run: |
         git clone https://github.com/hyprwm/hyprcursor.git ~/hyprcursor
         cd ~/hyprcursor
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+          -DCMAKE_PREFIX_PATH=/usr/include/toml++
         cmake --build build --target all -j$(nproc)
         sudo cmake --install build
 
