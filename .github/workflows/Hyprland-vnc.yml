@@ -1,4 +1,4 @@
-name: Hyprland-WebVNC-VirtualGPU
+name: Hyprland-Hyprdots-WebVNC
 
 on:
   workflow_dispatch:
@@ -12,34 +12,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install System Dependencies
+      - name: Install base system & mesa
         run: |
           sudo apt update
           sudo apt install -y \
-            git cmake meson ninja-build build-essential pkg-config \
-            libwayland-dev wayland-protocols libxkbcommon-dev libudev-dev \
-            libinput-dev libpixman-1-dev libseat-dev \
-            libdrm-dev libgbm-dev libegl1-mesa-dev libgles2-mesa-dev \
-            libsdl2-dev libxcb1-dev libxcb-composite0-dev \
-            xwayland python3-pip curl wget unzip xauth dbus-x11 \
-            novnc websockify tigervnc-standalone-server \
-            libgl1-mesa-dri libosmesa6 mesa-utils mesa-va-drivers
+            git curl wget unzip cmake meson ninja-build build-essential pkg-config \
+            libwayland-dev wayland-protocols libxkbcommon-dev libinput-dev \
+            libpixman-1-dev libseat-dev libudev-dev libdrm-dev libgbm-dev \
+            libegl1-mesa-dev libgles2-mesa-dev mesa-utils mesa-va-drivers \
+            libosmesa6 libsdl2-dev libxcb1-dev libxcb-composite0-dev \
+            xwayland xauth dbus-x11
 
-      - name: Install virglrenderer (Virtual GPU)
+      - name: Install virtual GPU (virglrenderer)
         run: |
-          sudo apt install -y virglrenderer1 virt-viewer libvirt-daemon-system
+          sudo apt install -y libvirglrenderer-dev
 
-      - name: Install Latest Hyprland Release (.deb)
+      - name: Install Hyprland (latest release)
         run: |
-          HYPR_VER=$(curl -s https://api.github.com/repos/hyprwm/Hyprland/releases/latest | grep tag_name | cut -d '"' -f4)
-          wget https://github.com/hyprwm/Hyprland/releases/download/$HYPR_VER/hyprland_${HYPR_VER#v}_amd64.deb
-          sudo apt install -y ./hyprland_${HYPR_VER#v}_amd64.deb || true
+          HYPR=$(curl -s https://api.github.com/repos/hyprwm/Hyprland/releases/latest | grep tag_name | cut -d '"' -f4)
+          wget https://github.com/hyprwm/Hyprland/releases/download/$HYPR/hyprland_${HYPR#v}_amd64.deb
+          sudo apt install -y ./hyprland_${HYPR#v}_amd64.deb || true
 
       - name: Install Hyprdots dependencies
         run: |
           sudo apt install -y \
             kitty rofi-wayland swww waybar mako-notifier \
-            fonts-font-awesome starship zsh fish
+            fonts-font-awesome zsh fish
+
           pip3 install --user pywal
 
       - name: Clone Hyprdots
@@ -53,7 +52,7 @@ jobs:
           cd ~/hyprdots
           ./setup install || true
 
-      - name: Hyprland headless config
+      - name: Create headless Hyprland config
         run: |
           mkdir -p ~/.config/hypr
           cat > ~/.config/hypr/headless.conf <<EOF
@@ -64,26 +63,30 @@ jobs:
           exec-once=kitty
           EOF
 
-      - name: Start Hyprland with Virtual GPU
+      - name: Start Hyprland (headless + virglrenderer)
         run: |
           export WLR_BACKENDS=headless
           export WLR_RENDERER=vulkan
-          export LIBGL_ALWAYS_SOFTWARE=0
-          export MESA_LOADER_DRIVER_OVERRIDE=virtio_gpu
-          export GALLIUM_DRIVER=virgl
           export WLR_RENDERER_ALLOW_SOFTWARE=1
+          export LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
+          export GALLIUM_DRIVER=llvmpipe
 
           Hyprland --config ~/.config/hypr/headless.conf &
-          sleep 7
+          sleep 8
 
-      - name: Start VNC server (wayvnc)
+      - name: Install wayvnc (Wayland-native VNC)
+        run: |
+          sudo apt install -y wayvnc
+
+      - name: Start VNC (port 5900)
         run: |
           echo "" > ~/.vncpass
           wayvnc --address 0.0.0.0 --password-file ~/.vncpass &
-          sleep 5
+          sleep 4
 
-      - name: Start WebVNC (noVNC)
+      - name: Start noVNC
         run: |
+          sudo apt install -y novnc websockify
           websockify --web /usr/share/novnc/ 6080 localhost:5900 &
           sleep 3
 
@@ -92,14 +95,14 @@ jobs:
           wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
           sudo dpkg -i cloudflared-linux-amd64.deb
 
-      - name: Expose via Cloudflare Tunnel
+      - name: Expose public URL (Cloudflare)
         run: |
           cloudflared tunnel --url http://localhost:6080 --no-autoupdate > log.txt 2>&1 &
-          sleep 7
+          sleep 8
           echo "========================================"
           echo "URL:"
           grep -o 'https://.*trycloudflare.com' log.txt
           echo "========================================"
 
-      - name: Keep Alive
+      - name: Keep alive
         run: tail -f /dev/null
