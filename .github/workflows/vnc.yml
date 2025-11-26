@@ -16,33 +16,38 @@ jobs:
             lxde x11vnc xvfb x11-xserver-utils \
             pulseaudio ffmpeg curl wget git \
             libopus0 nodejs npm \
-            libgl1-mesa-dri libgl1-mesa-glx mesa-utils libegl1-mesa-dev
+            mesa-utils \
+            libgl1 \
+            libglx-mesa0 \
+            mesa-va-drivers \
+            mesa-vulkan-drivers \
+            libegl1 \
+            libegl-mesa0 \
+            libgbm1
 
+          # Start audio server
           pulseaudio --start
 
-      - name: Set Environment for llvmpipe (software GPU)
+      - name: Enable llvmpipe Rendering (software GPU)
         run: |
           echo "DISPLAY=:1" >> $GITHUB_ENV
           echo "MESA_LOADER_DRIVER_OVERRIDE=llvmpipe" >> $GITHUB_ENV
           echo "GALLIUM_DRIVER=llvmpipe" >> $GITHUB_ENV
           echo "LIBGL_ALWAYS_SOFTWARE=1" >> $GITHUB_ENV
 
-      - name: Start Xvfb + LXDE Desktop + x11vnc
+      - name: Start X server (Xvfb) + LXDE + x11vnc
         run: |
           export DISPLAY=:1
-          # Xvfb with RANDR for auto resolution
           Xvfb :1 -screen 0 1280x720x24 -ac +extension RANDR &
           sleep 2
 
-          # Start LXDE
           startlxde &
           sleep 3
 
-          # Start VNC server without password
           x11vnc -display :1 -nopw -forever -shared -quiet &
           sleep 2
 
-      - name: Install WebRTC Streamer (Auto Res + Audio)
+      - name: Install WebRTC Streamer
         run: |
           git clone https://github.com/mpromonet/webrtc-streamer
           cd webrtc-streamer
@@ -51,11 +56,9 @@ jobs:
           make -j$(nproc)
           sudo cp webrtc-streamer /usr/local/bin/
 
-      - name: Start WebRTC Streamer
+      - name: Start WebRTC Streamer (auto resolution + audio)
         run: |
           export DISPLAY=:1
-          # Auto-resolution = enable RANDR monitor listener
-          # Audio = pulse → opus
           webrtc-streamer \
             -H 8000 \
             -C "\"pulse\"" \
@@ -81,5 +84,4 @@ jobs:
           echo "PUBLIC WEBRTC DESKTOP URL:"
           grep -o 'https://.*trycloudflare.com' log.txt
           echo "======================================="
-          echo "Biarkan job ini hidup agar sesi tetap aktif."
           tail -f /dev/null
