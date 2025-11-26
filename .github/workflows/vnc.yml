@@ -11,7 +11,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server
-        sudo apt install -y pulseaudio xclip wget tar git
+        sudo apt install -y pulseaudio xclip wget tar git novnc websockify
 
     - name: Start PulseAudio
       run: pulseaudio --start
@@ -21,18 +21,19 @@ jobs:
         mkdir -p ~/.vnc
         echo "" | vncpasswd -f > ~/.vnc/passwd
         chmod 600 ~/.vnc/passwd
-
-    - name: Start VNC server (clipboard enabled)
-      run: |
+        # xstartup
+        cat > ~/.vnc/xstartup <<EOF
+        #!/bin/sh
+        unset SESSION_MANAGER
+        unset DBUS_SESSION_BUS_ADDRESS
+        startxfce4 &
+        EOF
+        chmod +x ~/.vnc/xstartup
         export VNC_CLIPBOARD=1
-        vncserver :1 -geometry 1366x768 -SecurityTypes None &
-        sleep 3
-
-    - name: Install noVNC
-      run: |
-        git clone https://github.com/novnc/noVNC
-        git clone https://github.com/novnc/websockify
-        ln -s websockify noVNC/utils/websockify
+        vncserver :1 -geometry 1366x768 -SecurityTypes None
+        # Start noVNC
+        websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
+        echo "noVNC running on port 6080"
 
     - name: Start noVNC
       run: |
@@ -55,7 +56,7 @@ jobs:
 
     - name: Install cloudflared
       run: |
-        wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
 
     - name: Start Cloudflare tunnels and show public URLs
