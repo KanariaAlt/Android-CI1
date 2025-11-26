@@ -42,24 +42,13 @@ jobs:
     - name: Download and run WebRTC-streamer safely
       run: |
         mkdir -p /tmp/webrtc && cd /tmp/webrtc
-        
-        # Download tar.gz
         wget -O webrtc-streamer.tar.gz https://github.com/mpromonet/webrtc-streamer/releases/download/v0.8.13/webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz
-        
-        # List isi tar.gz untuk debugging (opsional)
-        tar -tzf webrtc-streamer.tar.gz
-        
-        # Ekstrak ke folder yang writable
         tar -xzf webrtc-streamer.tar.gz
-
-        # Cari biner secara fleksibel
         BINARY=$(find . -type f -executable -name "*webrtc*" | head -1)
-
         if [ -z "$BINARY" ]; then
           echo "Biner webrtc-streamer tidak ditemukan!"
           exit 1
         fi
-
         chmod +x "$BINARY"
         echo "Menjalankan webrtc-streamer: $BINARY"
         "./$BINARY" -H 0.0.0.0:8000 "screen://0" &
@@ -73,17 +62,23 @@ jobs:
       run: |
         echo "Starting Cloudflare tunnels..."
         
-        # noVNC tunnel
+        # Jalankan tunnel di background dan simpan log
         cloudflared tunnel --url http://localhost:6080 --metrics 0 --loglevel info > /tmp/tunnel6080.log 2>&1 &
-        
-        # WebRTC tunnel
         cloudflared tunnel --url http://localhost:8000 --metrics 0 --loglevel info > /tmp/tunnel8000.log 2>&1 &
         
-        sleep 5
-        
-        # Ambil URL publik dari log
-        echo "Public URL for noVNC:"
-        grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel6080.log || echo "URL not found yet"
-        
-        echo "Public URL for WebRTC-streamer:"
-        grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel8000.log || echo "URL not found yet"
+        # Tunggu URL muncul max 20 detik
+        echo "Waiting for Cloudflare URLs..."
+        for i in {1..20}; do
+          URL6080=$(grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel6080.log || true)
+          URL8000=$(grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel8000.log || true)
+          if [[ -n "$URL6080" && -n "$URL8000" ]]; then
+            break
+          fi
+          sleep 1
+        done
+
+        echo "Public URL for noVNC: ${URL6080:-not found}"
+        echo "Public URL for WebRTC-streamer: ${URL8000:-not found}"
+
+    - name: Keep workflow running
+      run: tail -f /dev/null
