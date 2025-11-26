@@ -10,12 +10,14 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update
-        sudo apt install -y xfce4 xfce4-goodies tightvncserver
-        sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl
+        sudo apt install -y xfce4 xfce4-goodies tightvncserver pulseaudio xclip wget tar git novnc websockify curl
         pulseaudio --start
+        
         mkdir -p ~/.vnc
         echo "" | vncpasswd -f > ~/.vnc/passwd
         chmod 600 ~/.vnc/passwd
+        
+        # xstartup
         cat > ~/.vnc/xstartup <<EOF
         #!/bin/sh
         unset SESSION_MANAGER
@@ -23,9 +25,10 @@ jobs:
         startxfce4 &
         EOF
         chmod +x ~/.vnc/xstartup
-        export VNC_CLIPBOARD=1
-        vncserver :1 -geometry 1366x768 -SecurityTypes None -localhost
+        vncserver :1 -geometry 1366x768 -depth 24 -localhost
         websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
+
+        export VNC_CLIPBOARD=1
 
     - name: Install Google Chrome
       run: |
