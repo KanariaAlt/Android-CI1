@@ -8,17 +8,16 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - name: Install dependencies (brew)
+      - name: Install dependencies
         run: |
-          brew install npm
-          brew install --cask ngrok
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
+          brew install python3
+          pip3 install websockify
+          git clone https://github.com/novnc/noVNC.git
 
       - name: Enable VNC & Create user
         run: |
           echo "[+] Creating VNC user"
-          sudo sysadminctl -addUser vncuser -password password -admin
+          sudo sysadminctl -addUser RenzAlt -password  -admin
 
           echo "[+] Enable Remote Management (VNC server)"
           sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
@@ -33,25 +32,18 @@ jobs:
 
           sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist || true
 
-      - name: Download noVNC + WebSockify
+      - name: Start Websockify (TCP → WebSocket)
         run: |
-          git clone https://github.com/novnc/noVNC.git
-          git clone https://github.com/novnc/websockify.git
-          cd websockify
-          npm install
-
-      - name: Start WebSockify (VNC → WebSocket)
-        run: |
-          cd websockify
-          nohup node websockify.js 6080 localhost:5900 &
+          nohup websockify --web noVNC 6080 localhost:5900 &
           sleep 3
 
-      - name: Start noVNC server
+      - name: Install ngrok
         run: |
-          cd noVNC
-          nohup ./utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
+          brew install --cask ngrok
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
 
-      - name: Start ngrok tunnel (HTTP)
+      - name: Start ngrok tunnel
         run: |
           echo "$NGROK_AUTHTOKEN" | ngrok config add-authtoken -
           ngrok http 6080 > ngrok.log &
@@ -59,8 +51,10 @@ jobs:
 
       - name: Show public noVNC URL
         run: |
-          echo "noVNC URL:"
+          echo "Open this in browser:"
           grep -Eo "https://[0-9a-z\-]*\.ngrok.io" ngrok.log | head -n 1
 
       - name: Keep session alive
-        run: sleep 36000
+        run: |
+          echo "Username: RenzAlt"
+          sleep 36000
