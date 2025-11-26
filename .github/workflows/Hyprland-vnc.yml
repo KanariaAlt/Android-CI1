@@ -13,8 +13,8 @@ jobs:
     env:
       DEBIAN_FRONTEND: noninteractive
       PKG_CONFIG_PATH: /usr/local/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
-      CC: gcc
-      CXX: g++
+      CC: clang
+      CXX: clang++
 
     steps:
     - name: Checkout
@@ -48,7 +48,7 @@ jobs:
           autoconf automake libtool pkg-config m4 xutils-dev xcb-proto libxcb1-dev libinotifytools-dev \
           libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
           libpango1.0-dev libcairo2-dev \
-          libvirglrenderer-dev libsdl2-dev xwayland hwdata --allow-unauthenticated
+          libvirglrenderer-dev libsdl2-dev xwayland hwdata clang clang-tools-18 --allow-unauthenticated
 
     - name: Build xcb-errors
       run: |
