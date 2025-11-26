@@ -13,7 +13,7 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update
-        sudo apt install -y lxqt-core lxqt-panel openbox tightvncserver pulseaudio xclip wget tar git novnc websockify curl
+        sudo apt install -y  gnome-session gnome-terminal gnome-shell gdm3 tightvncserver pulseaudio xclip wget tar git novnc websockify curl
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
@@ -29,7 +29,7 @@ jobs:
         #!/bin/sh
         unset SESSION_MANAGER
         unset DBUS_SESSION_BUS_ADDRESS
-        lxqt-session &
+        gnome-session &
         EOF
         chmod +x ~/.vnc/xstartup
         vncserver :1 -geometry 1366x768 -depth 24 -localhost
