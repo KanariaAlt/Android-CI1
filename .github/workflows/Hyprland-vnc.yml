@@ -148,6 +148,15 @@ jobs:
         cmake --build build -j$(nproc)
         sudo cmake --install build
 
+    - name: Build glaze
+      run: |
+        git clone https://github.com/stephenberry/glaze.git ~/glaze
+        cd ~/glaze
+        mkdir build && cd build
+        cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+        make -j$(nproc)
+        sudo make install
+
     - name: Build Hyprland from source
       run: |
         git clone -b v0.52.1-b https://github.com/hyprwm/Hyprland.git ~/hyprland-source
@@ -161,19 +170,6 @@ jobs:
         echo "[wrap-git]" > subprojects/wayland-protocols.wrap
         echo "url = https://gitlab.freedesktop.org/wayland/wayland-protocols.git" >> subprojects/wayland-protocols.wrap
         echo "revision = main" >> subprojects/wayland-protocols.wrap
-        # glaze subproject
-        git clone https://github.com/stephenberry/glaze.git subprojects/glaze
-        touch subprojects/glaze/glaze.cpp
-        cat > subprojects/glaze/meson.build <<'EOF'
-        project('glaze', 'cpp', default_options : ['cpp_std=c++17'])
-        glaze_lib = static_library('glaze', ['glaze.cpp'])
-        glaze_dep = declare_dependency(
-          include_directories: include_directories('.'),
-          link_with : glaze_lib
-        )
-        glaze_dep
-        EOF
-        
         meson setup build --prefix=/usr
         ninja -C build
         sudo ninja -C build install
