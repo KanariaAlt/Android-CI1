@@ -4,35 +4,66 @@ on:
   workflow_dispatch:
 
 jobs:
-  macos-novnc:
+  novnc:
     runs-on: macos-13
 
     steps:
       - name: Install dependencies
         run: |
-          brew install python3
+          brew install --cask xquartz
+          brew install x11vnc
+          brew install python
+          brew install openbox
           pip3 install websockify
           git clone https://github.com/novnc/noVNC.git
 
-      - name: Enable VNC & Create user
+      - name: Start XQuartz properly
         run: |
-          echo "[+] Creating VNC user"
-          sudo sysadminctl -addUser RenzAlt -password  -admin
+          # Start XQuartz in background
+          open -a XQuartz
+          sleep 8
 
-          echo "[+] Enable Remote Management (VNC server)"
-          sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart \
-            -activate -configure -access -on \
-            -clientopts -setvnclegacy -vnclegacy yes \
-            -clientopts -setvncpw -vncpw password \
-            -restart -agent -privs -all
+          # Create .Xauthority so display is valid
+          touch ~/.Xauthority
 
-          echo "[+] Enable ScreenSharing"
-          sudo defaults write /var/db/launchd.db/com.apple.launchd/overrides.plist \
-            com.apple.screensharing -dict Disabled -bool false
+          # Force DISPLAY variable
+          export DISPLAY=:0
 
-          sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.screensharing.plist || true
+          # Enable insecure IGLX (required in headless CI)
+          defaults write org.xquartz.X11 enable_iglx -bool true
+          defaults write org.xquartz.X11 nolisten_tcp -bool false
 
-      - name: Start Websockify (TCP → WebSocket)
+          # Restart XQuartz for settings to apply
+          killall Xquartz || true
+          open -a XQuartz
+          sleep 8
+
+      - name: Start Openbox (X11 Window Manager)
+        run: |
+          export DISPLAY=:0
+          nohup openbox-session > openbox.log 2>&1 &
+          sleep 2
+
+      - name: Start x11vnc with no password
+        run: |
+          export DISPLAY=:0
+
+          # Force x11vnc to capture framebuffer even if XQuartz is slow
+          nohup x11vnc \
+            -display :0 \
+            -nopw \
+            -forever \
+            -shared \
+            -noxdamage \
+            -alwaysshared \
+            -xkb \
+            -repeat \
+            -cursor arrow \
+            -rfbport 5900 > vnc.log 2>&1 &
+
+          sleep 3
+
+      - name: Start Websockify
         run: |
           nohup websockify --web noVNC 6080 localhost:5900 &
           sleep 3
@@ -44,16 +75,11 @@ jobs:
       - name: Start Cloudflare Tunnel
         run: |
           nohup cloudflared tunnel --url http://localhost:6080 > tunnel.log &
-
-          # give it time to generate URL
           sleep 5
 
-      - name: Show public noVNC URL
+      - name: Show noVNC URL
         run: |
-          echo "noVNC URL:"
           grep -Eo "https://.*trycloudflare.com" tunnel.log | head -n 1
 
-      - name: Keep session alive
-        run: |
-          echo "Username: RenzAlt"
-          sleep 36000
+      - name: Keep alive
+        run: sleep 36000
