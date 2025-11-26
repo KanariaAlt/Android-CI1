@@ -37,22 +37,21 @@ jobs:
           nohup websockify --web noVNC 6080 localhost:5900 &
           sleep 3
 
-      - name: Install ngrok
+      - name: Install cloudflared
         run: |
-          brew install --cask ngrok
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: 1
+          brew install cloudflared
 
-      - name: Start ngrok tunnel
+      - name: Start Cloudflare Tunnel
         run: |
-          echo "$NGROK_AUTHTOKEN" | ngrok config add-authtoken -
-          ngrok http 6080 > ngrok.log &
+          nohup cloudflared tunnel --url http://localhost:6080 > tunnel.log &
+
+          # give it time to generate URL
           sleep 5
 
       - name: Show public noVNC URL
         run: |
-          echo "Open this in browser:"
-          grep -Eo "https://[0-9a-z\-]*\.ngrok.io" ngrok.log | head -n 1
+          echo "noVNC URL:"
+          grep -Eo "https://.*trycloudflare.com" tunnel.log | head -n 1
 
       - name: Keep session alive
         run: |
