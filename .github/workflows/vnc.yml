@@ -1,4 +1,4 @@
-name: noVNC RDP
+name: noVNC + WebRTC RDP
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server
-        sudo apt install -y pulseaudio xclip wget tar
+        sudo apt install -y pulseaudio xclip wget tar git
 
     - name: Start PulseAudio
       run: pulseaudio --start
@@ -39,28 +39,41 @@ jobs:
         ./noVNC/utils/novnc_proxy --vnc localhost:5901 --listen 6080 &
         sleep 3
 
-    - name: Download WebRTC-streamer
+    - name: Download and run WebRTC-streamer
       run: |
-        wget -O webrtc-streamer.tar.gz https://github.com/mpromonet/webrtc-streamer/releases/download/v0.8.13/webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz && \
-        tar -xzf webrtc-streamer.tar.gz && \
-        EXTRACT_DIR=$(tar -tzf webrtc-streamer.tar.gz | head -1 | cut -f1 -d"/") && \
-        cd "$EXTRACT_DIR" && \
-        BINARY=$(find . -maxdepth 1 -type f -name "webrtc-streamer*" -executable | head -1) && \
-        chmod +x "$BINARY" && \
-        "$BINARY" -H 0.0.0.0:8000 "screen://0" &
+        mkdir -p /tmp/webrtc && cd /tmp/webrtc
+        wget -O webrtc-streamer.tar.gz https://github.com/mpromonet/webrtc-streamer/releases/download/v0.8.13/webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz
+        tar -xzf webrtc-streamer.tar.gz
+        EXTRACT_DIR=$(tar -tzf webrtc-streamer.tar.gz | head -1 | cut -f1 -d"/")
+        cd "$EXTRACT_DIR"
+        BINARY=$(find . -maxdepth 1 -type f -name "webrtc-streamer*" -executable | head -1)
+        if [ -z "$BINARY" ]; then
+          echo "Biner webrtc-streamer tidak ditemukan!"
+          exit 1
+        fi
+        chmod +x "$BINARY"
+        "./$BINARY" -H 0.0.0.0:8000 "screen://0" &
 
     - name: Install cloudflared
       run: |
         wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
 
-    - name: Start Cloudflare tunnels
+    - name: Start Cloudflare tunnels and show public URLs
       run: |
-        cloudflared tunnel --url http://localhost:6080 --metrics 0 &
-        cloudflared tunnel --url http://localhost:8000 --metrics 0 &
-        cloudflared tunnel --url http://localhost:9000 --metrics 0 &
+        echo "Starting Cloudflare tunnels..."
+        
+        # noVNC tunnel
+        cloudflared tunnel --url http://localhost:6080 --metrics 0 --loglevel info > /tmp/tunnel6080.log 2>&1 &
+        
+        # WebRTC tunnel
+        cloudflared tunnel --url http://localhost:8000 --metrics 0 --loglevel info > /tmp/tunnel8000.log 2>&1 &
+        
         sleep 5
-
-    - name: Show Public URLs
-      run: |
-        ps aux | grep -i "trycloudflare" | grep -v grep
+        
+        # Ambil URL publik dari log
+        echo "Public URL for noVNC:"
+        grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel6080.log || echo "URL not found yet"
+        
+        echo "Public URL for WebRTC-streamer:"
+        grep -o 'https://[a-zA-Z0-9.-]*\.trycloudflare.com' /tmp/tunnel8000.log || echo "URL not found yet"
