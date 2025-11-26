@@ -43,6 +43,7 @@ jobs:
       run: |
         wget https://github.com/mpromonet/webrtc-streamer/releases/download/v0.8.13/webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz
         tar -xzf webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz
+        cd webrtc-streamer-v0.8.13-Linux-x86_64-Release
         chmod +x webrtc-streamer
 
     - name: Start WebRTC-streamer
