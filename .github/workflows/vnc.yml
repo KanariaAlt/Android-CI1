@@ -10,7 +10,7 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update
-        sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server
+        sudo apt install -y xfce4 xfce4-goodies tightvncserver
         sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl
         pulseaudio --start
         mkdir -p ~/.vnc
