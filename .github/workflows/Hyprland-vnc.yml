@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     container:
-      image: gcc:15
+      image: gcc:16
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -91,7 +91,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprwayland-scanner.git ~/hyprwayland-scanner
         cd ~/hyprwayland-scanner
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
         cmake --build build -j$(nproc)
         cmake --install build
 
@@ -108,7 +108,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/aquamarine.git ~/aquamarine
         cd ~/aquamarine
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
         cmake --build build --target all -j$(nproc)
         cmake --install build
 
@@ -132,7 +132,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprcursor.git ~/hyprcursor
         cd ~/hyprcursor
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
         cmake --build build --target all -j$(nproc)
         cmake --install build
 
@@ -140,7 +140,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprgraphics.git ~/hyprgraphics
         cd ~/hyprgraphics
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
         cmake --build build -j$(nproc)
         cmake --install build
 
@@ -193,9 +193,9 @@ jobs:
     - name: Build Hyprland
       run: |
         cd ~/hyprland-source
-        export CC=clang
-        export CXX=clang++
-        meson setup build --prefix=/usr -Dcpp_std=c++23
+        export CC=gcc
+        export CXX=g++
+        meson setup build --prefix=/usr -Dcpp_std=c++26
         ninja -C build
         ninja -C build install
 
