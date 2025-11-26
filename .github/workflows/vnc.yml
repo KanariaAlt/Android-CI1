@@ -39,19 +39,29 @@ jobs:
         ./noVNC/utils/novnc_proxy --vnc localhost:5901 --listen 6080 &
         sleep 3
 
-    - name: Download and run WebRTC-streamer
+    - name: Download and run WebRTC-streamer safely
       run: |
         mkdir -p /tmp/webrtc && cd /tmp/webrtc
+        
+        # Download tar.gz
         wget -O webrtc-streamer.tar.gz https://github.com/mpromonet/webrtc-streamer/releases/download/v0.8.13/webrtc-streamer-v0.8.13-Linux-x86_64-Release.tar.gz
+        
+        # List isi tar.gz untuk debugging (opsional)
+        tar -tzf webrtc-streamer.tar.gz
+        
+        # Ekstrak ke folder yang writable
         tar -xzf webrtc-streamer.tar.gz
-        EXTRACT_DIR=$(tar -tzf webrtc-streamer.tar.gz | head -1 | cut -f1 -d"/")
-        cd "$EXTRACT_DIR"
-        BINARY=$(find . -maxdepth 1 -type f -name "webrtc-streamer*" -executable | head -1)
+
+        # Cari biner secara fleksibel
+        BINARY=$(find . -type f -executable -name "*webrtc*" | head -1)
+
         if [ -z "$BINARY" ]; then
           echo "Biner webrtc-streamer tidak ditemukan!"
           exit 1
         fi
+
         chmod +x "$BINARY"
+        echo "Menjalankan webrtc-streamer: $BINARY"
         "./$BINARY" -H 0.0.0.0:8000 "screen://0" &
 
     - name: Install cloudflared
