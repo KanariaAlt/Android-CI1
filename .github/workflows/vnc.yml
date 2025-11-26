@@ -11,7 +11,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server
-        sudo apt install -y pulseaudio xclip wget tar git novnc websockify
+        sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl xvfb fluxbox x11-utils unzip
 
     - name: Install Google Chrome
       run: |
@@ -19,6 +19,12 @@ jobs:
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
         sudo apt install -y google-chrome-stable
+
+    - name: Start Xvfb (virtual display)
+      run: |
+        Xvfb :1 -screen 0 1366x768x24 &
+        export DISPLAY=:1
+        sleep 2
 
     - name: Start PulseAudio
       run: pulseaudio --start
@@ -33,10 +39,11 @@ jobs:
         #!/bin/sh
         unset SESSION_MANAGER
         unset DBUS_SESSION_BUS_ADDRESS
-        startxfce4 &
+        exec fluxbox &
         EOF
         chmod +x ~/.vnc/xstartup
         export VNC_CLIPBOARD=1
+        export DISPLAY=:1
         vncserver :1 -geometry 1366x768 -SecurityTypes None
         # Start noVNC
         websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
