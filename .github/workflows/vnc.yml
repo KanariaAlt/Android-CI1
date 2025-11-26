@@ -27,6 +27,7 @@ jobs:
         chmod +x ~/.vnc/xstartup
         vncserver :1 -geometry 1366x768 -depth 24 -localhost
         websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
+        echo "noVNC is running on port 6080"
 
         export VNC_CLIPBOARD=1
 
