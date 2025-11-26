@@ -11,7 +11,26 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server
-        sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl xvfb fluxbox x11-utils unzip
+        sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl
+        pulseaudio --start
+        mkdir -p ~/.vnc
+        echo "" | vncpasswd -f > ~/.vnc/passwd
+        chmod 600 ~/.vnc/passwd
+        echo "localhost" > ~/.vnc/config
+        echo "Authentication=VncAuth" >> ~/.vnc/config
+        echo "AlwaysShared=1" >> ~/.vnc/config
+        rm -f ~/.vnc/passwd
+        cat > ~/.vnc/xstartup <<EOF
+        #!/bin/sh
+        unset SESSION_MANAGER
+        unset DBUS_SESSION_BUS_ADDRESS
+        startxfce4 &
+        EOF
+        chmod +x ~/.vnc/xstartup
+        export VNC_CLIPBOARD=1
+        export DISPLAY=:1
+        vncserver :1 -geometry 1366x768 -depth 24 -localhost -SecurityTypes None
+        websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
 
     - name: Install Google Chrome
       run: |
@@ -19,35 +38,6 @@ jobs:
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
         sudo apt install -y google-chrome-stable
-
-    - name: Start Xvfb (virtual display)
-      run: |
-        Xvfb :1 -screen 0 1366x768x24 &
-        export DISPLAY=:1
-        sleep 2
-
-    - name: Start PulseAudio
-      run: pulseaudio --start
-
-    - name: Setup VNC password
-      run: |
-        mkdir -p ~/.vnc
-        echo "" | vncpasswd -f > ~/.vnc/passwd
-        chmod 600 ~/.vnc/passwd
-        # xstartup
-        cat > ~/.vnc/xstartup <<EOF
-        #!/bin/sh
-        unset SESSION_MANAGER
-        unset DBUS_SESSION_BUS_ADDRESS
-        exec fluxbox &
-        EOF
-        chmod +x ~/.vnc/xstartup
-        export VNC_CLIPBOARD=1
-        export DISPLAY=:1
-        vncserver :1 -geometry 1366x768 -SecurityTypes None
-        # Start noVNC
-        websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 &
-        echo "noVNC running on port 6080"
 
     - name: Download and run WebRTC-streamer safely
       run: |
