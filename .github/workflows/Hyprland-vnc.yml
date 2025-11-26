@@ -23,11 +23,11 @@ jobs:
         sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list
         sudo apt-get update --fix-missing
 
-    - name: Install GCC 15
+    - name: Install GCC 14
       run: |
-        sudo apt install -y gcc-15 g++-15
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100
+        sudo apt install -y gcc-14 g++-14
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
         gcc --version
         g++ --version
 
