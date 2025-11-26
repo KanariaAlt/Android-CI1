@@ -7,6 +7,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    container:
+      image: gcc:15
 
     env:
       DEBIAN_FRONTEND: noninteractive
@@ -22,21 +24,6 @@ jobs:
       run: |
         sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list
         sudo apt-get update --fix-missing
-
-    - name: Install GCC 14
-      run: |
-        sudo apt install -y gcc-14 g++-14
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-        gcc --version
-        g++ --version
-
-    - name: Export latest GCC
-      run: |
-        export CC=gcc
-        export CXX=g++
-        echo "CC=$CC" >> $GITHUB_ENV
-        echo "CXX=$CXX" >> $GITHUB_ENV
 
     - name: Install base dependencies
       run: |
