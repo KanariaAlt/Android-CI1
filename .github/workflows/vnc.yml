@@ -78,6 +78,4 @@ jobs:
 
         echo "Public URL for noVNC: ${URL6080:-not found}"
         echo "Public URL for WebRTC-streamer: ${URL8000:-not found}"
-
-    - name: Keep workflow running
-      run: tail -f /dev/null
+        tail -f /dev/null
