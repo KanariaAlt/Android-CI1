@@ -23,13 +23,20 @@ jobs:
         sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list
         sudo apt-get update --fix-missing
 
-    - name: Install GCC 14
+    - name: Install GCC 15
       run: |
-        sudo apt-get install -y gcc-14 g++-14
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
+        sudo apt install -y gcc-15 g++-15
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-15 100
         gcc --version
         g++ --version
+
+    - name: Export latest GCC
+      run: |
+        export CC=gcc
+        export CXX=g++
+        echo "CC=$CC" >> $GITHUB_ENV
+        echo "CXX=$CXX" >> $GITHUB_ENV
 
     - name: Install base dependencies
       run: |
@@ -97,7 +104,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprwayland-scanner.git ~/hyprwayland-scanner
         cd ~/hyprwayland-scanner
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
         cmake --build build -j$(nproc)
         sudo cmake --install build
 
@@ -114,7 +121,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/aquamarine.git ~/aquamarine
         cd ~/aquamarine
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
         cmake --build build --target all -j$(nproc)
         sudo cmake --install build
 
@@ -138,7 +145,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprcursor.git ~/hyprcursor
         cd ~/hyprcursor
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr 
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
         cmake --build build --target all -j$(nproc)
         sudo cmake --install build
 
@@ -146,7 +153,7 @@ jobs:
       run: |
         git clone https://github.com/hyprwm/hyprgraphics.git ~/hyprgraphics
         cd ~/hyprgraphics
-        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_CXX_STANDARD=23
         cmake --build build -j$(nproc)
         sudo cmake --install build
 
@@ -197,7 +204,7 @@ jobs:
     - name: Build Hyprland
       run: |
         cd ~/hyprland-source
-        meson setup build --prefix=/usr -Dcpp_std=c++20
+        meson setup build --prefix=/usr -Dcpp_std=c++23
         ninja -C build
         sudo ninja -C build install
 
