@@ -196,6 +196,7 @@ jobs:
 
     - name: Build Hyprland
       run: |
+        cd ~/hyprland-source
         meson setup build --prefix=/usr -Dcpp_std=c++20
         ninja -C build
         sudo ninja -C build install
