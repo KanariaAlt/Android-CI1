@@ -32,7 +32,7 @@ jobs:
     - name: Install base dependencies
       run: |
         apt update -o Acquire::AllowInsecureRepositories=true
-        apt install -y \
+        apt -o Acquire::AllowInsecureRepositories=true -o Dpkg::Options::="--force-confnew" install -y \
           build-essential cmake meson ninja-build pkg-config \
           git curl wget unzip gettext dbus-x11 \
           libdisplay-info-dev libdrm-dev libgbm-dev libinput-dev \
@@ -48,7 +48,7 @@ jobs:
           autoconf automake libtool pkg-config m4 xutils-dev xcb-proto libxcb1-dev libinotifytools-dev \
           libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
           libpango1.0-dev libcairo2-dev \
-          libvirglrenderer-dev libsdl2-dev xwayland
+          libvirglrenderer-dev libsdl2-dev xwayland --allow-unauthenticated
 
     - name: Build xcb-errors
       run: |
@@ -198,9 +198,9 @@ jobs:
     - name: Install Hyprdots dependencies
       run: |
         apt update -o Acquire::AllowInsecureRepositories=true
-        apt install -y \
+        apt -o Acquire::AllowInsecureRepositories=true -o Dpkg::Options::="--force-confnew" install -y \
           kitty rofi-wayland waybar mako-notifier \
-          swww fonts-font-awesome zsh fish
+          swww fonts-font-awesome zsh fish --allow-unauthenticated
         pip3 install --user pywal
 
     - name: Clone Hyprdots
