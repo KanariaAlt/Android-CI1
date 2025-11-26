@@ -14,6 +14,8 @@ jobs:
         sudo apt install -y pulseaudio xclip wget tar git novnc websockify curl
         pulseaudio --start
         mkdir -p ~/.vnc
+        echo "" | vncpasswd -f > ~/.vnc/passwd
+        chmod 600 ~/.vnc/passwd
         cat > ~/.vnc/xstartup <<EOF
         #!/bin/sh
         unset SESSION_MANAGER
