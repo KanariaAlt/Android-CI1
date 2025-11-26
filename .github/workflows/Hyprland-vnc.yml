@@ -48,7 +48,7 @@ jobs:
           autoconf automake libtool pkg-config m4 xutils-dev xcb-proto libxcb1-dev libinotifytools-dev \
           libxcursor-dev libxcb-ewmh-dev libxcb-icccm4-dev libxcb-xinerama0-dev \
           libpango1.0-dev libcairo2-dev \
-          libvirglrenderer-dev libsdl2-dev xwayland --allow-unauthenticated
+          libvirglrenderer-dev libsdl2-dev xwayland hwdata --allow-unauthenticated
 
     - name: Build xcb-errors
       run: |
