@@ -27,7 +27,7 @@ jobs:
         deb http://archive.ubuntu.com/ubuntu/ jammy-updates main restricted universe multiverse
         deb http://archive.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse
         EOF
-        apt-get update --fix-missing
+        apt-get update -o Acquire::AllowInsecureRepositories=true
 
     - name: Install base dependencies
       run: |
