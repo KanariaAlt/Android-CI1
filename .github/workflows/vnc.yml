@@ -14,7 +14,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y xfce4 xfce4-goodies i3 polybar rofi dunst feh lxappearance \
-        fonts-noto fonts-jetbrains-mono-ttf papirus-icon-theme zsh tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
+        fonts-noto papirus-icon-theme zsh tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
