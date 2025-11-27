@@ -13,8 +13,8 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update
-        sudo apt install -y xfce4 xfce4-goodies picom polybar arc-theme papirus-icon-theme i3 i3status lightdm \
-        fonts-firacode tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
+        sudo apt install -y xfce4 xfce4-goodies i3 polybar rofi dunst feh lxappearance \
+        fonts-noto fonts-jetbrains-mono-ttf papirus-icon-theme zsh tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
@@ -40,6 +40,15 @@ jobs:
         echo "noVNC is running on port 6080"
 
         export VNC_CLIPBOARD=1
+
+    - name: Clone dotfiles
+      run: |
+        git clone https://github.com/fathulfahmy/dotfiles-linux.git ~/dotfiles-linux
+        cp -r ~/dotfiles-linux/.config/* ~/.config/
+        cp ~/dotfiles-linux/.Xresources ~/.Xresources
+        cp ~/dotfiles-linux/.xinitrc ~/.xinitrc
+        cp ~/dotfiles-linux/.zshrc ~/.zshrc
+        xrdb ~/.Xresources
 
     - name: Install Cloudflared tunnel
       run: |
