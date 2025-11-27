@@ -13,7 +13,8 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update
-        sudo apt install -y xfce4 xfce4-goodies arc-theme papirus-icon-theme tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
+        sudo apt install -y xfce4 xfce4-goodies picom polybar arc-theme papirus-icon-theme \
+        fonts-firacode tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
         sudo apt update
@@ -29,7 +30,9 @@ jobs:
         #!/bin/sh
         unset SESSION_MANAGER
         unset DBUS_SESSION_BUS_ADDRESS
+        picom --config /dev/null --experimental-backends --blur-method gaussian --blur-radius 5 --shadow-exclude "class_g = 'Polybar'" &
         startxfce4 &
+        polybar example &
         EOF
         chmod +x ~/.vnc/xstartup
         vncserver :1 -geometry 1366x768 -depth 24 -localhost
