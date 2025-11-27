@@ -35,6 +35,7 @@ jobs:
         polybar example &
         EOF
         chmod +x ~/.vnc/xstartup
+        export DISPLAY=:1
         vncserver :1 -geometry 1366x768 -depth 24 -localhost
         websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 --idle-timeout 0 &
         echo "noVNC is running on port 6080"
@@ -43,6 +44,7 @@ jobs:
 
     - name: Clone dotfiles
       run: |
+        export DISPLAY=:1
         git clone https://github.com/fathulfahmy/dotfiles-linux.git ~/dotfiles-linux
         cp -r ~/dotfiles-linux/.config/* ~/.config/
         cp ~/dotfiles-linux/.Xresources ~/.Xresources
