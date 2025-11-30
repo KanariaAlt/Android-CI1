@@ -64,21 +64,20 @@ jobs:
         sudo unzip system.zip -d /etc/waydroid-extra/images
         sudo unzip vendor.zip -d /etc/waydroid-extra/images
 
-    - name: Create waydroid config directory
+    - name: Disable kernel (+ binder) for Waydroid
       run: |
         sudo mkdir -p /etc/waydroid
-
-    - name: Configure Waydroid for no-kernel mode
-      run: |
         echo "[waydroid]" | sudo tee /etc/waydroid/waydroid.cfg
         echo "disable_binder=true" | sudo tee -a /etc/waydroid/waydroid.cfg
         echo "disable_module_load=true" | sudo tee -a /etc/waydroid/waydroid.cfg
+        echo "WAYDROID_DISABLE_BINDER=1" | sudo tee -a /etc/environment
+        echo "WAYDROID_DISABLE_MODULE_LOAD=1" | sudo tee -a /etc/environment
+        source /etc/environment
 
-    - name: Initialize Waydroid with custom images + GAPPS
+    - name: Init Waydroid (NO KERNEL MODE)
       run: |
-        export WAYDROID_DISABLE_BINDER=1
-        export WAYDROID_DISABLE_MODULE_LOAD=1
-        sudo waydroid init -s GAPPS -f
+        sudo -E WAYDROID_DISABLE_BINDER=1 WAYDROID_DISABLE_MODULE_LOAD=1 \
+          waydroid --details-to-stdout init -s GAPPS -f
 
     - name: Start Waydroid container
       run: |
