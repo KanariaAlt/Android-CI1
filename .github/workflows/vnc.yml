@@ -42,15 +42,9 @@ jobs:
 
     - name: binder
       run: |
-        git clone https://github.com/choff/anbox-modules
+        git clone https://github.com/choff/anbox-modules anbox-modules
         cd anbox-modules
-        sudo cp anbox.conf /etc/modules-load.d/
-        sudo cp 99-anbox.rules /lib/udev/rules.d/
-        sudo cp -rT binder /usr/src/anbox-binder-1
-        sudo dkms install anbox-binder/1
-        sudo modprobe binder_linux
-        lsmod | grep -e binder_linux
-        ls -alh /dev/binder
+        bash INSTALL.sh
         
     - name: Add Waydroid repo and install Waydroid
       run: |
