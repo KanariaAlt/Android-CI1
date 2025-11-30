@@ -13,12 +13,12 @@ jobs:
     - name: Install desktop & VNC
       run: |
         sudo apt update -o Acquire::AllowInsecureRepositories=true
-        sudo apt install -y xfce4 xfce4-goodies i3 polybar rofi dunst feh lxappearance \
-        fonts-noto papirus-icon-theme zsh tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
+        sudo apt install -y xfce4 xfce4-goodies \
+        tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils --allow-unauthenticated
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-        sudo apt update
-        sudo apt install -y google-chrome-stable
+        sudo apt update -o Acquire::AllowInsecureRepositories=true
+        sudo apt install -y google-chrome-stable --allow-unauthenticated
         pulseaudio --start
         
         mkdir -p ~/.vnc
@@ -30,9 +30,7 @@ jobs:
         #!/bin/sh
         unset SESSION_MANAGER
         unset DBUS_SESSION_BUS_ADDRESS
-        picom --config /dev/null --experimental-backends --blur-method gaussian --blur-radius 5 --shadow-exclude "class_g = 'Polybar'" &
         startxfce4 &
-        polybar example &
         EOF
         chmod +x ~/.vnc/xstartup
         export DISPLAY=:1
@@ -41,16 +39,6 @@ jobs:
         echo "noVNC is running on port 6080"
 
         export VNC_CLIPBOARD=1
-
-    - name: Clone dotfiles
-      run: |
-        export DISPLAY=:1
-        git clone https://github.com/fathulfahmy/dotfiles-linux.git ~/dotfiles-linux
-        cp -r ~/dotfiles-linux/.config/* ~/.config/
-        cp ~/dotfiles-linux/.Xresources ~/.Xresources
-        cp ~/dotfiles-linux/.xinitrc ~/.xinitrc
-        cp ~/dotfiles-linux/.zshrc ~/.zshrc
-        xrdb ~/.Xresources
 
     - name: Install Cloudflared tunnel
       run: |
