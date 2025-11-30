@@ -8,14 +8,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Download noVNC + websockify
+    - name: Download noVNC + websockify (safe zip names)
       run: |
-        curl -LO https://github.com/novnc/noVNC/archive/refs/heads/master.zip
-        curl -LO https://github.com/novnc/websockify/archive/refs/heads/master.zip
-        tar -xf master.zip
-        tar -xf master.zip.1
-        mv noVNC-master C:\noVNC
-        mv websockify-master C:\websockify
+        curl -L -o noVNC.zip https://github.com/novnc/noVNC/archive/refs/heads/master.zip
+        curl -L -o websockify.zip https://github.com/novnc/websockify/archive/refs/heads/master.zip
+
+        Expand-Archive noVNC.zip -DestinationPath C:\
+        Expand-Archive websockify.zip -DestinationPath C:\
+
+        Rename-Item "C:\noVNC-master" "C:\noVNC"
+        Rename-Item "C:\websockify-master" "C:\websockify"
 
     - name: Install Python
       uses: actions/setup-python@v5
@@ -27,30 +29,30 @@ jobs:
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Start RDP → VNC bridge (websockify)
+    - name: Start websockify (RDP → VNC)
       run: |
         Start-Process -WindowStyle Hidden python -ArgumentList "C:\websockify\websockify.py 6081 localhost:3389"
 
-    - name: Start noVNC core server
+    - name: Start noVNC proxy server
       run: |
-        Start-Process -WindowStyle Hidden python -ArgumentList "C:\noVNC\utils\novnc_proxy --vnc localhost:6081 --listen 6080"
+        Start-Process -WindowStyle Hidden python -ArgumentList "C:\noVNC\utils\novnc_proxy --listen 6080 --vnc localhost:6081"
 
     - name: Download cloudflared
       run: |
-        curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
-        ren cloudflared-windows-amd64.exe cloudflared.exe
-        move cloudflared.exe C:\cloudflared.exe
+        curl -L -o cloudflared.exe https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
+        Move-Item cloudflared.exe C:\cloudflared.exe
 
-    - name: Start Cloudflare Tunnel (stable mode)
+    - name: Start Cloudflare Tunnel (stable)
       run: |
         New-Item -ItemType Directory -Path C:\cf -Force > $null
+
         Start-Process -WindowStyle Hidden `
           -FilePath "C:\cloudflared.exe" `
           -ArgumentList "tunnel --protocol http2 --no-autoupdate --url http://localhost:6080 --logfile C:\cf\log.txt"
 
         Start-Sleep -Seconds 10
 
-    - name: Show tunnel URL
+    - name: Show Cloudflare URL
       run: |
         Get-Content C:\cf\log.txt | Select-String "https://"
 
