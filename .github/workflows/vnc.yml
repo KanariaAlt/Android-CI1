@@ -29,21 +29,23 @@ jobs:
         sudo apt install -y qemu-kvm qemu-utils qemu-system-x86 \
         libgtk-3-0 libgtk-3-bin libglib2.0-0
 
-    - name: Download Android-x86 + GApps
+    - name: Download Bliss OS Android 12 + GApps ISO
       run: |
-        wget -O android.iso https://mirrors.osdn.net/android-x86/9.0-r2/android-x86_64-9.0-r2-GAPPS.iso
+        wget -O bliss.iso "https://sourceforge.net/projects/blissos-dev/files/Android-Generic/PC/aosp/gapps/12/android_x86_64-a12_r27-03.04.22-01-mesa22-ksu-gapps-treble-libndk-sleep-sd-libva.iso/download"
 
-    - name: Create QEMU disk
+    - name: Create virtual disk for Android
       run: qemu-img create -f qcow2 android.qcow2 16G
 
-    - name: Start QEMU inside XFCE (as window, with GApps)
+    - name: Start QEMU (Bliss OS Android 12) inside XFCE
       run: |
-        sleep 10
+        # Wait a bit so XFCE + VNC server fully up
+        sleep 15
 
+        # Launch QEMU with GTK display on DISPLAY :1 (XFCE VNC session)
         DISPLAY=:1 nohup qemu-system-x86_64 \
           -m 4096 \
           -smp 4 \
-          -cdrom android.iso \
+          -cdrom bliss.iso \
           -hda android.qcow2 \
           -boot d \
           -enable-kvm \
