@@ -8,16 +8,13 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Download noVNC
+    - name: Download noVNC + websockify
       run: |
         curl -LO https://github.com/novnc/noVNC/archive/refs/heads/master.zip
-        tar -xf master.zip
-        mv noVNC-master C:\noVNC
-
-    - name: Download websockify
-      run: |
         curl -LO https://github.com/novnc/websockify/archive/refs/heads/master.zip
         tar -xf master.zip
+        tar -xf master.zip.1
+        mv noVNC-master C:\noVNC
         mv websockify-master C:\websockify
 
     - name: Install Python
@@ -30,34 +27,32 @@ jobs:
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Start websockify
+    - name: Start RDP → VNC bridge (websockify)
       run: |
         Start-Process -WindowStyle Hidden python -ArgumentList "C:\websockify\websockify.py 6081 localhost:3389"
 
-    - name: Start noVNC
+    - name: Start noVNC core server
       run: |
-        Start-Process -WindowStyle Hidden python -ArgumentList "C:\noVNC\utils\launch.py --vnc localhost:6081 --listen 6080"
+        Start-Process -WindowStyle Hidden python -ArgumentList "C:\noVNC\utils\novnc_proxy --vnc localhost:6081 --listen 6080"
 
-    - name: Download Cloudflared
+    - name: Download cloudflared
       run: |
         curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe
         ren cloudflared-windows-amd64.exe cloudflared.exe
         move cloudflared.exe C:\cloudflared.exe
 
-    - name: Start Cloudflare Tunnel (no input redirection)
+    - name: Start Cloudflare Tunnel (stable mode)
       run: |
-        New-Item -ItemType Directory -Path C:\cf > $null
+        New-Item -ItemType Directory -Path C:\cf -Force > $null
         Start-Process -WindowStyle Hidden `
           -FilePath "C:\cloudflared.exe" `
-          -ArgumentList "tunnel --url http://localhost:6080 --no-autoupdate --logfile C:\cf\log.txt"
+          -ArgumentList "tunnel --protocol http2 --no-autoupdate --url http://localhost:6080 --logfile C:\cf\log.txt"
 
-        # beri waktu cloudflared untuk generate URL
-        Start-Sleep -Seconds 8
+        Start-Sleep -Seconds 10
 
-    - name: Print Tunnel URL
+    - name: Show tunnel URL
       run: |
         Get-Content C:\cf\log.txt | Select-String "https://"
 
-    - name: Keep runner alive
-      run: |
-        ping -t 127.0.0.1 >NUL
+    - name: Keep alive
+      run: ping -t 127.0.0.1
