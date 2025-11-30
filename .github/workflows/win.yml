@@ -20,23 +20,23 @@ jobs:
         tar -xf master.zip
         mv websockify-master C:\websockify
 
-    - name: Install Python (for websockify)
+    - name: Install Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
-    - name: Enable Windows RDP
+    - name: Enable RDP
       run: |
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: Start websockify (RDP → WebSocket @ 6081)
+    - name: Start websockify
       run: |
-        Start-Process -WindowStyle Hidden -FilePath "python" -ArgumentList "C:\websockify\websockify.py 6081 localhost:3389"
+        Start-Process -WindowStyle Hidden python -ArgumentList "C:\websockify\websockify.py 6081 localhost:3389"
 
-    - name: Start noVNC (web UI @ 6080)
+    - name: Start noVNC
       run: |
-        Start-Process -WindowStyle Hidden -FilePath "python" -ArgumentList "C:\noVNC\utils\launch.py --vnc localhost:6081 --listen 6080"
+        Start-Process -WindowStyle Hidden python -ArgumentList "C:\noVNC\utils\launch.py --vnc localhost:6081 --listen 6080"
 
     - name: Download Cloudflared
       run: |
@@ -44,15 +44,20 @@ jobs:
         ren cloudflared-windows-amd64.exe cloudflared.exe
         move cloudflared.exe C:\cloudflared.exe
 
-    - name: Start Cloudflare Tunnel (expose port 6080)
+    - name: Start Cloudflare Tunnel (no input redirection)
       run: |
-        Start-Process -WindowStyle Hidden -FilePath "C:\cloudflared.exe" -ArgumentList "tunnel --url http://localhost:6080 --no-autoupdate"
-        timeout /t 5
+        New-Item -ItemType Directory -Path C:\cf > $null
+        Start-Process -WindowStyle Hidden `
+          -FilePath "C:\cloudflared.exe" `
+          -ArgumentList "tunnel --url http://localhost:6080 --no-autoupdate --logfile C:\cf\log.txt"
 
-    - name: Show Tunnel URL
+        # beri waktu cloudflared untuk generate URL
+        Start-Sleep -Seconds 8
+
+    - name: Print Tunnel URL
       run: |
-        Get-Content C:\Users\runneradmin\.cloudflared\*.log
+        Get-Content C:\cf\log.txt | Select-String "https://"
 
-    - name: Keep alive
+    - name: Keep runner alive
       run: |
         ping -t 127.0.0.1 >NUL
