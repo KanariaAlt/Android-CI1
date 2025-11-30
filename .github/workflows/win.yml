@@ -11,7 +11,7 @@ jobs:
     steps:
 
     - name: Set RDP Password
-      run: net user runneradmin "1234"
+      run: net user runneradmin "Password123!"
       shell: powershell
 
     - name: Enable Windows RDP
