@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@v4
     - name: Install desktop & VNC
       run: |
-        sudo apt update
+        sudo apt update -o Acquire::AllowInsecureRepositories=true
         sudo apt install -y xfce4 xfce4-goodies i3 polybar rofi dunst feh lxappearance \
         fonts-noto papirus-icon-theme zsh tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
