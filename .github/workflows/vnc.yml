@@ -1,88 +1,74 @@
-name: noVNC + WebRTC
+name: XFCE + noVNC + QEMU Android (GApps + Window Mode)
 
 on:
   workflow_dispatch:
 
 jobs:
-  run-vnc:
+  run:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Install desktop & VNC
+    - name: Update system
+      run: sudo apt update
+
+    - name: Install XFCE, VNC, noVNC, Websockify
       run: |
-        sudo apt update -o Acquire::AllowInsecureRepositories=true
-        sudo apt install -y xfce4 xfce4-goodies dkms linux-headers-$(uname -r) \
-        tightvncserver pulseaudio xclip wget tar git novnc websockify curl x11-xserver-utils --allow-unauthenticated
-        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-        echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-        sudo apt update -o Acquire::AllowInsecureRepositories=true
-        sudo apt install -y google-chrome-stable --allow-unauthenticated
-        pulseaudio --start
-        
+        sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify
+
         mkdir -p ~/.vnc
-        echo "" | vncpasswd -f > ~/.vnc/passwd
+        echo "Password123" | vncpasswd -f > ~/.vnc/passwd
         chmod 600 ~/.vnc/passwd
-        
-        # xstartup
-        cat > ~/.vnc/xstartup <<EOF
-        #!/bin/sh
-        unset SESSION_MANAGER
-        unset DBUS_SESSION_BUS_ADDRESS
-        startxfce4 &
-        EOF
-        chmod +x ~/.vnc/xstartup
-        export DISPLAY=:1
-        vncserver :1 -geometry 1366x768 -depth 24 -localhost
-        websockify --web /usr/share/novnc/ --wrap-mode=ignore 6080 localhost:5901 --idle-timeout 0 &
-        echo "noVNC is running on port 6080"
 
-        export VNC_CLIPBOARD=1
+        vncserver -kill :1 || true
+        vncserver -geometry 1360x768 :1
 
-    - name: binder
-      run: |
-        git clone https://github.com/choff/anbox-modules anbox-modules
-        cd anbox-modules
-        bash INSTALL.sh
-        
-    - name: Add Waydroid repo and install Waydroid
-      run: |
-        curl https://repo.waydro.id | sudo bash
-        sudo apt update
-        sudo apt install -y waydroid
+        nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
 
-    - name: Stop any running Waydroid / cleanup
+    - name: Install QEMU
       run: |
-        sudo systemctl stop waydroid-container || true
+        sudo apt install -y qemu-kvm qemu-utils qemu-system-x86 \
+        libgtk-3-0 libgtk-3-bin libglib2.0-0
 
-    - name: Init Waydroid
+    - name: Download Android-x86 + GApps
       run: |
-        sudo waydroid init -s GAPPS
+        wget -O android.iso https://mirrors.osdn.net/android-x86/9.0-r2/android-x86_64-9.0-r2-GAPPS.iso
 
-    - name: Start Waydroid container
+    - name: Create QEMU disk
+      run: qemu-img create -f qcow2 android.qcow2 16G
+
+    - name: Start QEMU inside XFCE (as window, with GApps)
       run: |
-        sudo waydroid container start
         sleep 10
 
-    - name: Start Waydroid GUI session in Xvfb
-      run: |
-        export DISPLAY=:1
-          waydroid session start &
-        sleep 10
+        DISPLAY=:1 nohup qemu-system-x86_64 \
+          -m 4096 \
+          -smp 4 \
+          -cdrom android.iso \
+          -hda android.qcow2 \
+          -boot d \
+          -enable-kvm \
+          -vga virtio \
+          -display gtk \
+          >/dev/null 2>&1 &
 
-    - name: Install Cloudflared tunnel
+    - name: Install Cloudflare Tunnel
       run: |
-        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
 
-    - name: Expose noVNC public URL
+        mkdir -p ~/.cloudflared
+        nohup cloudflared tunnel --url http://localhost:6080 > ~/.cloudflared/cf.log 2>&1 &
+
+    - name: Show Tunnel URL
       run: |
-          echo "Creating public tunnel..."
-          cloudflared tunnel --url http://localhost:6080 --no-autoupdate > log.txt 2>&1 &
-          sleep 10
-          echo "=============================================="
-          grep -o 'https://.*trycloudflare.com' log.txt
-          echo "=============================================="
-          echo "Keep this Actions job running to maintain connection."
-          tail -f /dev/null
+        sleep 5
+        cat ~/.cloudflared/cf.log | grep "https://"
+        echo "=============================="
+        echo "XFCE Desktop + QEMU Android with GApps"
+        echo "=============================="
+        cat ~/.cloudflared/cf.log | grep "https://"
+
+    - name: Keep runner alive 6 hours
+      run: |
+        echo "Running..."
+        sleep 21600
