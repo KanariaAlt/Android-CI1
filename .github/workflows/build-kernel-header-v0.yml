@@ -45,6 +45,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          submodules: true 
 
       - name: "Generate CI"
         id: generate-matrix
@@ -108,12 +110,6 @@ jobs:
       - name: "Clone kernel source => (${{ env.KERNELREPO }})"
         run: |
           git clone --recursive --depth=1 -j $(nproc) --branch $KERNELBRANCH $KERNELREPO $KERNELNAME
-
-          echo "Clone kernel source => ($KERNELREPO)"
-
-      - name: "Clone tinanium-module source => (${{ env.KERNELREPO }})"
-        run: |
-          git clone --recursive --depth=1 -j $(nproc) -b nightcord/unified https://github.com/AmiaAlt-Miscellaneous/techpack_xiaomi-titanium $KERNELNAME/techpack/xiaomi-titanium
           
       - name: "Clone Clang"
         env:
