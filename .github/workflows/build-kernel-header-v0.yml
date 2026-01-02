@@ -111,9 +111,17 @@ jobs:
         run: |
           git clone --recursive --depth=1 -j $(nproc) --branch $KERNELBRANCH $KERNELREPO $KERNELNAME
 
-      - name: "Clone kernel source => (${{ env.KERNELREPO }})"
+      - name: "Clone dts source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/techpack_xiaomi-titanium -b vince/4.19/wip $KERNELNAME/techpack/xiaomi-titanium
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
+
+      - name: "Clone prima source => (${{ env.KERNELREPO }})"
+        run: |
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/Mi-Thorium/vendor_qcom_opensource_wlan_prima -b wlan/LA.UM.9.6.4/mithorium/master $KERNELNAME/drivers/staging/prima
+
+      - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
+        run: |
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/techpack_xiaomi-titanium -b next $KERNELNAME/techpack/xiaomi-titanium
           
       - name: "Clone Clang"
         env:
