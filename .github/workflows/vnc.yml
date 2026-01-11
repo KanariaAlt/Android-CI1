@@ -1,52 +1,78 @@
-name: XFCE + noVNC + QEMU Android (GApps + Window Mode)
+name: XFCE noVNC Cloudflare
 
 on:
   workflow_dispatch:
 
 jobs:
-  run:
+  desktop:
     runs-on: ubuntu-latest
 
     steps:
     - name: Update system
       run: sudo apt update
 
-    - name: Install XFCE, VNC, noVNC, Websockify
+    - name: Install XFCE, VNC, noVNC
       run: |
-        sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify
+        sudo apt install -y \
+          xfce4 xfce4-goodies \
+          tigervnc-standalone-server \
+          novnc websockify
 
         mkdir -p ~/.vnc
         echo "1" | vncpasswd -f > ~/.vnc/passwd
         chmod 600 ~/.vnc/passwd
 
+        cat <<EOF > ~/.vnc/xstartup
+        #!/bin/sh
+        unset SESSION_MANAGER
+        unset DBUS_SESSION_BUS_ADDRESS
+        exec startxfce4 &
+        EOF
+
+        chmod +x ~/.vnc/xstartup
+
         vncserver -kill :1 || true
         vncserver -geometry 1600x900 :1
 
-        nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
+        nohup websockify \
+          --web=/usr/share/novnc \
+          6080 localhost:5901 \
+          >/tmp/novnc.log 2>&1 &
+
+    - name: Verify noVNC
+      run: |
+        ss -tlnp | grep 6080
+        echo "noVNC running on port 6080"
 
     - name: Install QEMU
       run: |
-        sudo apt install -y qemu-kvm qemu-utils qemu-system-x86 \
-        libgtk-3-0 libgtk-3-bin libglib2.0-0
+        sudo apt install -y \
+          qemu-kvm qemu-utils qemu-system-x86 \
+          libgtk-3-0 libglib2.0-0
 
-    - name: Install Cloudflare Tunnel
+    - name: Install cloudflared
       run: |
-        wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+        wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
         sudo dpkg -i cloudflared-linux-amd64.deb
 
+    - name: Start Cloudflare Tunnel
+      run: |
         mkdir -p ~/.cloudflared
-        nohup cloudflared tunnel --url http://localhost:6080 > ~/.cloudflared/cf.log 2>&1 &
+
+        cloudflared tunnel \
+          --url http://localhost:6080 \
+          --loglevel info \
+          2>&1 | tee ~/.cloudflared/cf.log &
 
     - name: Show Tunnel URL
       run: |
-        sleep 5
-        cat ~/.cloudflared/cf.log | grep "https://"
+        echo "Waiting for tunnel..."
+        sleep 10
         echo "=============================="
-        echo "XFCE Desktop + QEMU Android with GApps"
+        echo "XFCE Desktop (noVNC)"
         echo "=============================="
-        cat ~/.cloudflared/cf.log | grep "https://"
+        grep -Eo "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" \
+          ~/.cloudflared/cf.log | head -n 1
 
-    - name: Keep runner alive 6 hours
-      run: |
-        echo "Running..."
-        sleep 21600
+    - name: Keep runner alive (6 hours)
+      run: sleep 21600
