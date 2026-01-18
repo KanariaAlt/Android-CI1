@@ -111,11 +111,6 @@ jobs:
         run: |
           git clone --recursive --depth=1 -j $(nproc) --branch $KERNELBRANCH $KERNELREPO $KERNELNAME
 
-      - name: SukiSU Setup
-        run: |
-          cd $KERNELNAME
-          curl -LSs "https://raw.githubusercontent.com/KanariaAlt/SukiSU-Ultra/nongki/kernel/setup.sh" | bash -s nongki
-
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
           git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
