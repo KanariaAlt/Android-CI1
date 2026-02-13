@@ -126,7 +126,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/techpack_xiaomi-titanium -b techpack/titanium/4.19/master $KERNELNAME/techpack/xiaomi-titanium
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/techpack_xiaomi-titanium -b techpack/titanium-v2/4.19/master $KERNELNAME/techpack/xiaomi-titanium
           
       - name: "Clone Clang"
         env:
