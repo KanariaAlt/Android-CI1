@@ -130,7 +130,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_techpack_audio-legacy-v2 -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_techpack_audio-legacy -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
           
       - name: "Clone Clang"
         env:
