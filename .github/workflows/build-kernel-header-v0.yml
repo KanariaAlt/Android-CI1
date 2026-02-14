@@ -118,7 +118,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/kaguyahimeAlt/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
@@ -126,11 +126,11 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/techpack_xiaomi-titanium -b techpack/titanium-v2/4.19/master $KERNELNAME/techpack/xiaomi-titanium
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/kaguyahimeAlt/kernel_techpack_xiaomi-titanium -b techpack/titanium/4.19/master $KERNELNAME/techpack/xiaomi-titanium
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/Project-Nightcord/kernel_techpack_audio-legacy -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/kaguyahimeAlt/kernel_techpack_audio-legacy -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
           
       - name: "Clone Clang"
         env:
