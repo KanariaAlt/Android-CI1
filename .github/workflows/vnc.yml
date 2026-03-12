@@ -21,15 +21,4 @@ jobs:
         vncserver -geometry 1600x900 :1
 
         nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
-                wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-        sudo dpkg -i cloudflared-linux-amd64.deb
-                mkdir -p ~/.cloudflared
-        cloudflared tunnel \
-          --url http://localhost:6080 \
-          --loglevel info \
-          2>&1 | tee ~/.cloudflared/cf.log &
-                  grep -Eo "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" \
-          ~/.cloudflared/cf.log | head -n 1
-
-    - name: Keep runner alive (6 hours)
-      run: sleep 21600
+                - name: Install Cloudflared run: | wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb sudo dpkg -i cloudflared-linux-amd64.deb - name: Start Tunnel run: | mkdir -p ~/.cloudflared cloudflared tunnel \ --url http://localhost:6080 \ --no-autoupdate \ --loglevel info \ > ~/.cloudflared/cf.log 2>&1 & echo "Waiting for Cloudflare tunnel..." for i in {1..30}; do URL=$(grep -Eo "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" ~/.cloudflared/cf.log | head -n 1) if [ ! -z "$URL" ]; then echo "===============================" echo "noVNC URL:" echo $URL echo "===============================" break fi sleep 2 done
