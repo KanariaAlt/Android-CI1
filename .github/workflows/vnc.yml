@@ -8,31 +8,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Update system
         run: sudo apt update
 
-      - name: Install desktop environment
+      - name: Install Desktop + VNC
         run: |
-          sudo apt install -y \
-          xfce4 xfce4-terminal \
+          sudo apt install -y xfce4 xfce4-goodies \
           tigervnc-standalone-server \
           novnc websockify \
-          dbus-x11 wget curl
+          dbus-x11 curl wget
 
-      - name: Setup VNC
+      - name: Configure VNC
         run: |
           mkdir -p ~/.vnc
+
           echo "1" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
 
-          cat <<EOF > ~/.vnc/xstartup
+          cat <<'EOF' > ~/.vnc/xstartup
           #!/bin/bash
-          xrdb $HOME/.Xresources
-          startxfce4 &
+          unset SESSION_MANAGER
+          unset DBUS_SESSION_BUS_ADDRESS
+          dbus-launch startxfce4
           EOF
 
           chmod +x ~/.vnc/xstartup
 
+      - name: Start VNC Server
+        run: |
           vncserver -kill :1 || true
           vncserver :1 -geometry 1600x900 -depth 24
 
@@ -42,35 +46,34 @@ jobs:
           --web=/usr/share/novnc \
           6080 localhost:5901 > novnc.log 2>&1 &
 
-      - name: Install Bore
+      - name: Install Bore tunnel
         run: |
           wget -q https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64
           chmod +x bore-linux-amd64
           sudo mv bore-linux-amd64 /usr/local/bin/bore
 
-      - name: Start Bore Tunnel
+      - name: Start tunnel
         run: |
           echo "Starting tunnel..."
 
           nohup bore local 6080 --to bore.pub > bore.log 2>&1 &
-          sleep 8
+
+          sleep 10
 
           PORT=$(grep -o "bore.pub:[0-9]*" bore.log | head -n1)
 
-          echo "================================="
-          echo "noVNC URL:"
+          echo "======================================"
+          echo "Desktop URL:"
           echo "http://$PORT/vnc.html"
           echo ""
           echo "Password VNC:"
           echo "1"
-          echo "================================="
+          echo "======================================"
 
       - name: Show logs
         run: |
-          echo "----- Bore Log -----"
+          echo "===== BORE LOG ====="
           cat bore.log
-          echo "----- noVNC Log -----"
-          cat novnc.log
 
-      - name: Keep runner alive (12h)
+      - name: Keep runner alive
         run: sleep 43200
