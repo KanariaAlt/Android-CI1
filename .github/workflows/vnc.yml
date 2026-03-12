@@ -1,4 +1,4 @@
-name: XFCE noVNC Pinggy
+name: XFCE noVNC Ngrok
 
 on:
   workflow_dispatch:
@@ -13,7 +13,7 @@ jobs:
 
       - name: Install XFCE VNC noVNC
         run: |
-          sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify openssh-client
+          sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify wget
 
           mkdir -p ~/.vnc
           echo "1" | vncpasswd -f > ~/.vnc/passwd
@@ -24,26 +24,22 @@ jobs:
 
           nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
 
-      - name: Start Pinggy Tunnel
+      - name: Install Ngrok
         run: |
-          echo "Starting Pinggy tunnel..."
+          wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
+          unzip ngrok-v3-stable-linux-amd64.zip
+          sudo mv ngrok /usr/local/bin
 
-          ssh -o StrictHostKeyChecking=no -p 443 -R 0:localhost:6080 tcp@a.pinggy.io > pinggy.log 2>&1 &
+      - name: Setup Ngrok Auth
+        run: ngrok config add-authtoken ${{ secrets.NGROK_TOKEN }}
 
-          echo "Waiting for tunnel..."
+      - name: Start Ngrok Tunnel
+        run: |
+          nohup ngrok http 6080 > ngrok.log 2>&1 &
+          sleep 10
 
-          for i in $(seq 1 20); do
-            URL=$(grep -Eo "https://[0-9A-Za-z.-]+\.pinggy\.link" pinggy.log | head -n 1)
-            if [ -n "$URL" ]; then
-              echo "==============================="
-              echo "noVNC URL:"
-              echo "$URL"
-              echo "Password VNC: 1"
-              echo "==============================="
-              break
-            fi
-            sleep 2
-          done
+          echo "Tunnel URL:"
+          curl -s http://127.0.0.1:4040/api/tunnels | grep -o 'https://[^"]*'
 
       - name: Keep runner alive
         run: sleep 21600
