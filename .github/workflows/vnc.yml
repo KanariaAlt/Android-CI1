@@ -1,4 +1,4 @@
-name: XFCE noVNC Cloudflare
+name: XFCE noVNC Pinggy
 
 on:
   workflow_dispatch:
@@ -8,19 +8,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Update system
-      run: sudo apt update
+      - name: Update system
+        run: sudo apt update
 
-    - name: Install XFCE, VNC, noVNC
-      run: |
-        sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify
+      - name: Install XFCE VNC noVNC
+        run: |
+          sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify openssh-client
+
           mkdir -p ~/.vnc
-        echo "1" | vncpasswd -f > ~/.vnc/passwd
-        chmod 600 ~/.vnc/passwd
-                vncserver -kill :1 || true
-        vncserver -geometry 1600x900 :1
+          echo "1" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
 
-        nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
-                - name: Install Cloudflared run: | wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb sudo dpkg -i cloudflared-linux-amd64.deb - name: Start Tunnel run: | mkdir -p ~/.cloudflared cloudflared tunnel \ --url http://localhost:6080 \ --no-autoupdate \ --loglevel info \ > ~/.cloudflared/cf.log 2>&1 & echo "Waiting for Cloudflare tunnel..." for i in {1..30}; do URL=$(grep -Eo "https://[a-zA-Z0-9.-]+\.trycloudflare\.com" ~/.cloudflared/cf.log | head -n 1) if [ ! -z "$URL" ]; then echo "===============================" echo "noVNC URL:" echo $URL echo "===============================" break fi sleep 2 done
+          vncserver -kill :1 || true
+          vncserver -geometry 1600x900 :1
 
-                - name: Keep runner alive (6 hours) run: sleep 21600
+          nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
+
+      - name: Start Pinggy Tunnel
+        run: |
+          echo "Starting Pinggy tunnel..."
+
+          ssh -o StrictHostKeyChecking=no -p 443 -R 0:localhost:6080 tcp@a.pinggy.io > pinggy.log 2>&1 &
+
+          echo "Waiting for tunnel..."
+
+          for i in $(seq 1 20); do
+            URL=$(grep -Eo "https://[0-9A-Za-z.-]+\.pinggy\.link" pinggy.log | head -n 1)
+            if [ -n "$URL" ]; then
+              echo "==============================="
+              echo "noVNC URL:"
+              echo "$URL"
+              echo "Password VNC: 1"
+              echo "==============================="
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Keep runner alive
+        run: sleep 21600
