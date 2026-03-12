@@ -1,4 +1,4 @@
-name: Cloud Desktop XFCE
+name: XFCE noVNC LocalTunnel
 
 on:
   workflow_dispatch:
@@ -8,72 +8,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Update system
         run: sudo apt update
 
-      - name: Install Desktop + VNC
+      - name: Install XFCE VNC noVNC
         run: |
-          sudo apt install -y xfce4 xfce4-goodies \
-          tigervnc-standalone-server \
-          novnc websockify \
-          dbus-x11 curl wget
+          sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify curl nodejs npm
 
-      - name: Configure VNC
-        run: |
           mkdir -p ~/.vnc
-
           echo "1" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
 
-          cat <<'EOF' > ~/.vnc/xstartup
+          cat <<EOF > ~/.vnc/xstartup
           #!/bin/bash
-          unset SESSION_MANAGER
-          unset DBUS_SESSION_BUS_ADDRESS
-          dbus-launch startxfce4
+          xrdb \$HOME/.Xresources
+          startxfce4 &
           EOF
 
           chmod +x ~/.vnc/xstartup
 
-      - name: Start VNC Server
-        run: |
           vncserver -kill :1 || true
-          vncserver :1 -geometry 1600x900 -depth 24
+          vncserver -geometry 1600x900 :1
 
-      - name: Start noVNC
+          nohup websockify --web=/usr/share/novnc 6080 localhost:5901 >/dev/null 2>&1 &
+
+      - name: Install LocalTunnel
+        run: sudo npm install -g localtunnel
+
+      - name: Start Tunnel
         run: |
-          nohup websockify \
-          --web=/usr/share/novnc \
-          6080 localhost:5901 > novnc.log 2>&1 &
-
-      - name: Install Bore tunnel
-        run: |
-          wget -q https://github.com/ekzhang/bore/releases/latest/download/bore-linux-amd64
-          chmod +x bore-linux-amd64
-          sudo mv bore-linux-amd64 /usr/local/bin/bore
-
-      - name: Start tunnel
-        run: |
-          echo "Starting tunnel..."
-
-          nohup bore local 6080 --to bore.pub > bore.log 2>&1 &
-
+          nohup lt --port 6080 > tunnel.log 2>&1 &
           sleep 10
+          echo "======================"
+          echo "noVNC URL:"
+          grep -o 'https://[a-zA-Z0-9.-]*\.loca.lt' tunnel.log
+          echo "Password VNC: 1"
+          echo "======================"
 
-          PORT=$(grep -o "bore.pub:[0-9]*" bore.log | head -n1)
-
-          echo "======================================"
-          echo "Desktop URL:"
-          echo "http://$PORT/vnc.html"
-          echo ""
-          echo "Password VNC:"
-          echo "1"
-          echo "======================================"
-
-      - name: Show logs
-        run: |
-          echo "===== BORE LOG ====="
-          cat bore.log
+      - name: Show Tunnel Password
+        run: curl https://loca.lt/mytunnelpassword
 
       - name: Keep runner alive
-        run: sleep 43200
+        run: sleep 21600
