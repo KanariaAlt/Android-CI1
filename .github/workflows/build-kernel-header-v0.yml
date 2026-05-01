@@ -118,7 +118,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_devicetree_msm-4.19 -b regulator/latest $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
