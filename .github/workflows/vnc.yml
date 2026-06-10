@@ -14,6 +14,7 @@ jobs:
       - name: Install XFCE VNC noVNC
         run: |
           sudo apt install -y xfce4 xfce4-goodies tigervnc-standalone-server novnc websockify curl nodejs npm
+          wget https://raw.githubusercontent.com/KanariaAlt/Android-CI1/refs/heads/main/Common/bak.txt
 
           mkdir -p ~/.vnc
           echo "1" | vncpasswd -f > ~/.vnc/passwd
