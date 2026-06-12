@@ -118,7 +118,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_devicetree_msm-4.19 -b main $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_devicetree_msm-4.19 -b unified $KERNELNAME/arch/arm64/boot/dts/vendor-legacy
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
@@ -126,11 +126,11 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_xiaomi-titanium -b 13 $KERNELNAME/techpack/xiaomi-titanium
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_xiaomi-msm8953 -b main $KERNELNAME/techpack/xiaomi-msm8953
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_audio-legacy -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_audio-legacy -b unified $KERNELNAME/techpack/audio-legacy
           
       - name: "Clone Clang"
         env:
