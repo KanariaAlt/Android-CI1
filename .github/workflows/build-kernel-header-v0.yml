@@ -130,7 +130,7 @@ jobs:
 
       - name: "Clone techpack kernel source => (${{ env.KERNELREPO }})"
         run: |
-          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_audio-legacy -b audio/4.19/master $KERNELNAME/techpack/audio-legacy
+          git clone --recursive --depth=1 -j $(nproc) https://github.com/imren0x/kernel_techpack_audio-legacy -b latest $KERNELNAME/techpack/audio-legacy
           
       - name: "Clone Clang"
         env:
