@@ -110,11 +110,6 @@ jobs:
       - name: "Clone kernel source => (${{ env.KERNELREPO }})"
         run: |
           git clone --recursive --depth=1 -j $(nproc) --branch $KERNELBRANCH $KERNELREPO $KERNELNAME
-
-      - name: SukiSU Setup
-        run: |
-          cd $KERNELNAME
-          curl -LSs "https://raw.githubusercontent.com/KanariaAlt/SukiSU-Ultra/nongki/kernel/setup.sh" | bash -s nongki
           
       - name: "Clone Clang"
         env:
